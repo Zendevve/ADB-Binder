@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
@@ -25,19 +25,14 @@ const createWindow = () => {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: false,
-      webSecurity: false, // temporarily disable for debugging local resources if needed, though sandbox: false is usually enough
+      webSecurity: false,
     },
-    // Hide the menu bar by default for a cleaner look
     autoHideMenuBar: true,
-    // Dark theme frame
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#050506',
     title: 'ADB Binder',
-    titleBarStyle: 'hidden',
-    titleBarOverlay: {
-      color: '#1a1a1a',
-      symbolColor: '#ffffff',
-      height: 30
-    }
+    frame: false, // Frameless for custom titlebar
+    minWidth: 900,
+    minHeight: 600,
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -63,12 +58,23 @@ app.on('activate', () => {
   }
 });
 
-import { ipcMain, dialog } from 'electron';
+import { dialog } from 'electron';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
 import ffprobePath from 'ffprobe-static';
 import fs from 'fs';
 import os from 'os';
+
+// Window control handlers
+ipcMain.on('window:minimize', () => mainWindow?.minimize());
+ipcMain.on('window:maximize', () => {
+  if (mainWindow?.isMaximized()) {
+    mainWindow.unmaximize();
+  } else {
+    mainWindow?.maximize();
+  }
+});
+ipcMain.on('window:close', () => mainWindow?.close());
 
 // Configure ffmpeg path
 ffmpeg.setFfmpegPath(ffmpegPath as string);
@@ -85,6 +91,7 @@ interface ProcessOptions {
   outputFormat: 'm4b' | 'aac' | 'mp3';
   bitrate: string;
   coverPath?: string;
+  licenseTier?: 'FREE' | 'PRO' | 'STUDIO';
   bookMetadata?: {
     title: string;
     author: string;
@@ -144,9 +151,144 @@ ipcMain.handle('audio:show-save-dialog', async () => {
   return result.filePath;
 });
 
+// Save Project - Export project state to JSON file
+ipcMain.handle('project:save', async (_event, projectData: object) => {
+  const result = await dialog.showSaveDialog({
+    title: 'Save Project',
+    defaultPath: 'audiobook-project.adbp',
+    filters: [
+      { name: 'ADB Binder Project', extensions: ['adbp'] },
+      { name: 'JSON Files', extensions: ['json'] },
+    ],
+  });
+
+  if (!result.filePath) {
+    return { success: false, cancelled: true };
+  }
+
+  try {
+    fs.writeFileSync(result.filePath, JSON.stringify(projectData, null, 2), 'utf8');
+    console.log('[PROJECT] Saved to:', result.filePath);
+    return { success: true, filePath: result.filePath };
+  } catch (err) {
+    console.error('[PROJECT] Save error:', err);
+    return { success: false, error: (err as Error).message };
+  }
+});
+
+// Load Project - Import project state from JSON file
+ipcMain.handle('project:load', async () => {
+  const result = await dialog.showOpenDialog({
+    title: 'Open Project',
+    properties: ['openFile'],
+    filters: [
+      { name: 'ADB Binder Project', extensions: ['adbp', 'json'] },
+    ],
+  });
+
+  if (!result.filePaths || result.filePaths.length === 0) {
+    return { success: false, cancelled: true };
+  }
+
+  try {
+    const filePath = result.filePaths[0];
+    const content = fs.readFileSync(filePath, 'utf8');
+    const projectData = JSON.parse(content);
+    console.log('[PROJECT] Loaded from:', filePath);
+    return { success: true, data: projectData, filePath };
+  } catch (err) {
+    console.error('[PROJECT] Load error:', err);
+    return { success: false, error: (err as Error).message };
+  }
+});
+
+// Smart Artwork Detection - Find cover from folder or embedded in audio
+ipcMain.handle('audio:detect-artwork', async (_event, filePaths: string[]) => {
+  if (!filePaths || filePaths.length === 0) {
+    return { found: false };
+  }
+
+  console.log('[ARTWORK] Scanning for artwork from', filePaths.length, 'files');
+
+  // Get the directory of the first file
+  const firstFilePath = filePaths[0];
+  const fileDir = path.dirname(firstFilePath);
+
+  // Common cover image filenames to look for
+  const coverNames = [
+    'cover.jpg', 'cover.jpeg', 'cover.png',
+    'folder.jpg', 'folder.jpeg', 'folder.png',
+    'album.jpg', 'album.jpeg', 'album.png',
+    'front.jpg', 'front.jpeg', 'front.png',
+    'artwork.jpg', 'artwork.jpeg', 'artwork.png',
+  ];
+
+  // 1. Check for cover image files in the folder
+  for (const coverName of coverNames) {
+    const coverPath = path.join(fileDir, coverName);
+    if (fs.existsSync(coverPath)) {
+      console.log('[ARTWORK] Found cover file:', coverPath);
+      try {
+        const imageBuffer = fs.readFileSync(coverPath);
+        const base64 = imageBuffer.toString('base64');
+        const ext = path.extname(coverPath).toLowerCase().slice(1);
+        const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
+        return {
+          found: true,
+          source: 'folder',
+          data: `data:${mimeType};base64,${base64}`,
+        };
+      } catch (err) {
+        console.error('[ARTWORK] Error reading cover file:', err);
+      }
+    }
+  }
+
+  // 2. Try to extract embedded artwork from audio files using ffmpeg
+  for (const filePath of filePaths) {
+    try {
+      const tempCoverPath = path.join(os.tmpdir(), `cover_${Date.now()}.jpg`);
+
+      await new Promise<void>((resolve, _reject) => {
+        ffmpeg(filePath)
+          .outputOptions(['-an', '-vcodec', 'copy'])
+          .output(tempCoverPath)
+          .on('end', () => resolve())
+          .on('error', (_err) => {
+            // No embedded artwork is not an error, just skip
+            resolve();
+          })
+          .run();
+      });
+
+      if (fs.existsSync(tempCoverPath)) {
+        const stats = fs.statSync(tempCoverPath);
+        if (stats.size > 0) {
+          console.log('[ARTWORK] Extracted embedded artwork from:', filePath);
+          const imageBuffer = fs.readFileSync(tempCoverPath);
+          const base64 = imageBuffer.toString('base64');
+          fs.unlinkSync(tempCoverPath); // Cleanup
+          return {
+            found: true,
+            source: 'embedded',
+            data: `data:image/jpeg;base64,${base64}`,
+          };
+        }
+        fs.unlinkSync(tempCoverPath); // Cleanup empty file
+      }
+    } catch (err) {
+      // Silently continue to next file
+    }
+  }
+
+  console.log('[ARTWORK] No artwork found');
+  return { found: false };
+});
+
 // Process and merge audio files using filter_complex
 ipcMain.handle('audio:process', async (_event, options: ProcessOptions) => {
-  const { files, bitrate, outputFormat, coverPath, bookMetadata } = options;
+  const { files, bitrate, outputFormat, coverPath, bookMetadata, licenseTier } = options;
+  const isFreeUser = !licenseTier || licenseTier === 'FREE';
 
   if (!files || files.length === 0) {
     throw new Error('No files to process');
@@ -258,6 +400,13 @@ ipcMain.handle('audio:process', async (_event, options: ProcessOptions) => {
         if (bookMetadata.genre) outputOptions.push('-metadata', `genre=${bookMetadata.genre}`);
         if (bookMetadata.year) outputOptions.push('-metadata', `date=${bookMetadata.year}`);
         if (bookMetadata.narrator) outputOptions.push('-metadata', `composer=${bookMetadata.narrator}`);
+      }
+
+      // Add watermark for FREE tier users
+      if (isFreeUser) {
+        outputOptions.push('-metadata', 'comment=Made with ADB Binder - https://adb-binder.com');
+        outputOptions.push('-metadata', 'encoder=ADB Binder (Free)');
+        console.log('[MERGE] Adding FREE tier watermark to metadata');
       }
     }
 

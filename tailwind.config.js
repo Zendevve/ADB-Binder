@@ -52,11 +52,47 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Linear Design System Colors
+        linear: {
+          bg: {
+            deep: '#020203',
+            base: '#050506',
+            elevated: '#0a0a0c',
+          },
+          surface: {
+            DEFAULT: 'rgba(255,255,255,0.05)',
+            hover: 'rgba(255,255,255,0.08)',
+          },
+          foreground: {
+            DEFAULT: '#EDEDEF',
+            muted: '#8A8F98',
+            subtle: 'rgba(255,255,255,0.60)',
+          },
+          accent: {
+            DEFAULT: '#5E6AD2',
+            bright: '#6872D9',
+            glow: 'rgba(94,106,210,0.3)',
+          },
+          border: {
+            DEFAULT: 'rgba(255,255,255,0.06)',
+            hover: 'rgba(255,255,255,0.10)',
+            accent: 'rgba(94,106,210,0.30)',
+          },
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'Geist Sans', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
+      boxShadow: {
+        'linear-card': '0 0 0 1px rgba(255,255,255,0.06), 0 2px 20px rgba(0,0,0,0.4), 0 0 40px rgba(0,0,0,0.2)',
+        'linear-card-hover': '0 0 0 1px rgba(255,255,255,0.1), 0 8px 40px rgba(0,0,0,0.5), 0 0 80px rgba(94,106,210,0.1)',
+        'linear-glow': '0 0 0 1px rgba(94,106,210,0.5), 0 4px 12px rgba(94,106,210,0.3), inset 0 1px 0 0 rgba(255,255,255,0.2)',
+        'linear-inner': 'inset 0 1px 0 0 rgba(255,255,255,0.1)',
       },
       keyframes: {
         "accordion-down": {

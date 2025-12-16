@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { describe, it, expect } from 'vitest';
 import ffmpegPath from 'ffmpeg-static';
 import fs from 'fs';

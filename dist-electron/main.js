@@ -27,19 +27,14 @@ const createWindow = () => {
       contextIsolation: true,
       sandbox: false,
       webSecurity: false
-      // temporarily disable for debugging local resources if needed, though sandbox: false is usually enough
     },
-    // Hide the menu bar by default for a cleaner look
     autoHideMenuBar: true,
-    // Dark theme frame
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#050506",
     title: "ADB Binder",
-    titleBarStyle: "hidden",
-    titleBarOverlay: {
-      color: "#1a1a1a",
-      symbolColor: "#ffffff",
-      height: 30
-    }
+    frame: false,
+    // Frameless for custom titlebar
+    minWidth: 900,
+    minHeight: 600
   });
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
@@ -59,6 +54,15 @@ app.on("activate", () => {
     createWindow();
   }
 });
+ipcMain.on("window:minimize", () => mainWindow?.minimize());
+ipcMain.on("window:maximize", () => {
+  if (mainWindow?.isMaximized()) {
+    mainWindow.unmaximize();
+  } else {
+    mainWindow?.maximize();
+  }
+});
+ipcMain.on("window:close", () => mainWindow?.close());
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath.path);
 ipcMain.handle("audio:read-metadata", async (_event, filePath) => {
@@ -103,8 +107,124 @@ ipcMain.handle("audio:show-save-dialog", async () => {
   });
   return result.filePath;
 });
+ipcMain.handle("project:save", async (_event, projectData) => {
+  const result = await dialog.showSaveDialog({
+    title: "Save Project",
+    defaultPath: "audiobook-project.adbp",
+    filters: [
+      { name: "ADB Binder Project", extensions: ["adbp"] },
+      { name: "JSON Files", extensions: ["json"] }
+    ]
+  });
+  if (!result.filePath) {
+    return { success: false, cancelled: true };
+  }
+  try {
+    fs.writeFileSync(result.filePath, JSON.stringify(projectData, null, 2), "utf8");
+    console.log("[PROJECT] Saved to:", result.filePath);
+    return { success: true, filePath: result.filePath };
+  } catch (err) {
+    console.error("[PROJECT] Save error:", err);
+    return { success: false, error: err.message };
+  }
+});
+ipcMain.handle("project:load", async () => {
+  const result = await dialog.showOpenDialog({
+    title: "Open Project",
+    properties: ["openFile"],
+    filters: [
+      { name: "ADB Binder Project", extensions: ["adbp", "json"] }
+    ]
+  });
+  if (!result.filePaths || result.filePaths.length === 0) {
+    return { success: false, cancelled: true };
+  }
+  try {
+    const filePath = result.filePaths[0];
+    const content = fs.readFileSync(filePath, "utf8");
+    const projectData = JSON.parse(content);
+    console.log("[PROJECT] Loaded from:", filePath);
+    return { success: true, data: projectData, filePath };
+  } catch (err) {
+    console.error("[PROJECT] Load error:", err);
+    return { success: false, error: err.message };
+  }
+});
+ipcMain.handle("audio:detect-artwork", async (_event, filePaths) => {
+  if (!filePaths || filePaths.length === 0) {
+    return { found: false };
+  }
+  console.log("[ARTWORK] Scanning for artwork from", filePaths.length, "files");
+  const firstFilePath = filePaths[0];
+  const fileDir = path.dirname(firstFilePath);
+  const coverNames = [
+    "cover.jpg",
+    "cover.jpeg",
+    "cover.png",
+    "folder.jpg",
+    "folder.jpeg",
+    "folder.png",
+    "album.jpg",
+    "album.jpeg",
+    "album.png",
+    "front.jpg",
+    "front.jpeg",
+    "front.png",
+    "artwork.jpg",
+    "artwork.jpeg",
+    "artwork.png"
+  ];
+  for (const coverName of coverNames) {
+    const coverPath = path.join(fileDir, coverName);
+    if (fs.existsSync(coverPath)) {
+      console.log("[ARTWORK] Found cover file:", coverPath);
+      try {
+        const imageBuffer = fs.readFileSync(coverPath);
+        const base64 = imageBuffer.toString("base64");
+        const ext = path.extname(coverPath).toLowerCase().slice(1);
+        const mimeType = ext === "png" ? "image/png" : "image/jpeg";
+        return {
+          found: true,
+          source: "folder",
+          data: `data:${mimeType};base64,${base64}`
+        };
+      } catch (err) {
+        console.error("[ARTWORK] Error reading cover file:", err);
+      }
+    }
+  }
+  for (const filePath of filePaths) {
+    try {
+      const tempCoverPath = path.join(os.tmpdir(), `cover_${Date.now()}.jpg`);
+      await new Promise((resolve, _reject) => {
+        ffmpeg(filePath).outputOptions(["-an", "-vcodec", "copy"]).output(tempCoverPath).on("end", () => resolve()).on("error", (_err) => {
+          resolve();
+        }).run();
+      });
+      if (fs.existsSync(tempCoverPath)) {
+        const stats = fs.statSync(tempCoverPath);
+        if (stats.size > 0) {
+          console.log("[ARTWORK] Extracted embedded artwork from:", filePath);
+          const imageBuffer = fs.readFileSync(tempCoverPath);
+          const base64 = imageBuffer.toString("base64");
+          fs.unlinkSync(tempCoverPath);
+          return {
+            found: true,
+            source: "embedded",
+            data: `data:image/jpeg;base64,${base64}`
+          };
+        }
+        fs.unlinkSync(tempCoverPath);
+      }
+    } catch (err) {
+    }
+  }
+  console.log("[ARTWORK] No artwork found");
+  return { found: false };
+});
 ipcMain.handle("audio:process", async (_event, options) => {
-  const { files, bitrate, outputFormat, coverPath, bookMetadata } = options;
+  const { files, bitrate, outputFormat, coverPath, bookMetadata, licenseTier } = options;
+  const isFreeUser = !licenseTier || licenseTier === "FREE";
   if (!files || files.length === 0) {
     throw new Error("No files to process");
   }
@@ -191,6 +311,11 @@ ipcMain.handle("audio:process", async (_event, options) => {
         if (bookMetadata.genre) outputOptions.push("-metadata", `genre=${bookMetadata.genre}`);
         if (bookMetadata.year) outputOptions.push("-metadata", `date=${bookMetadata.year}`);
         if (bookMetadata.narrator) outputOptions.push("-metadata", `composer=${bookMetadata.narrator}`);
+      }
+      if (isFreeUser) {
+        outputOptions.push("-metadata", "comment=Made with ADB Binder - https://adb-binder.com");
+        outputOptions.push("-metadata", "encoder=ADB Binder (Free)");
+        console.log("[MERGE] Adding FREE tier watermark to metadata");
       }
     }
     command.outputOptions(outputOptions).output(outputPath).on("start", (cmd) => {
