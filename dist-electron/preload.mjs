@@ -7,17 +7,29 @@ n.exposeInMainWorld("electron", {
   close: () => o.send("window:close"),
   audio: {
     getPathForFile: (e) => {
-      const i = t.getPathForFile(e);
-      return console.log("[PRELOAD] getPathForFile:", e.name, "->", i), i;
+      const r = t.getPathForFile(e);
+      return console.log("[PRELOAD] getPathForFile:", e.name, "->", r), r;
     },
     readMetadata: (e) => o.invoke("audio:read-metadata", e),
     process: (e) => o.invoke("audio:process", e),
     detectArtwork: (e) => o.invoke("audio:detect-artwork", e),
     onProgress: (e) => {
-      o.on("audio:progress", (i, r) => e(r));
+      o.on("audio:progress", (r, i) => e(i));
     },
     removeProgressListener: () => {
       o.removeAllListeners("audio:progress");
+    },
+    // Format conversion
+    convert: (e) => o.invoke("audio:convert", e),
+    batchConvert: (e) => o.invoke("audio:batchConvert", e)
+  },
+  // For direct IPC access (required for image upload events)
+  ipcRenderer: {
+    on: (e, r) => {
+      o.on(e, r);
+    },
+    removeAllListeners: (e) => {
+      o.removeAllListeners(e);
     }
   },
   project: {

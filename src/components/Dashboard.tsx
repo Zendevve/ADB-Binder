@@ -5,6 +5,7 @@ import { UploadStep } from '@/components/wizard/UploadStep';
 import { ArrangeStep } from '@/components/wizard/ArrangeStep';
 import { MetadataStep } from '@/components/wizard/MetadataStep';
 import { ExportStep } from '@/components/wizard/ExportStep';
+import { Converter } from '@/components/Converter';
 import { defaultMetadata } from '@/components/MetadataPanel';
 import type { BookMetadata } from '@/components/MetadataPanel';
 import { AudioAnalyzer } from '@/lib/audio-analyzer';
@@ -14,7 +15,10 @@ type OutputFormat = 'm4b' | 'mp3' | 'aac';
 type Bitrate = '64k' | '96k' | '128k' | '192k';
 
 export default function Dashboard() {
-  // Step state
+  // Tool mode
+  const [toolMode, setToolMode] = useState<'binder' | 'converter'>('binder');
+
+  // Step state (for Binder)
   const [currentStep, setCurrentStep] = useState(1);
 
   // Data state
@@ -168,6 +172,42 @@ export default function Dashboard() {
       {/* Titlebar with project controls */}
       <Titlebar onSaveProject={handleSaveProject} onLoadProject={handleLoadProject} />
 
+      {/* Tool Navigation Tabs */}
+      <div className="flex border-b border-white/[0.06] px-6 bg-[#0a0a0c]/50 backdrop-blur-sm">
+        <button
+          onClick={() => setToolMode('binder')}
+          className={`px-6 py-3 font-medium transition-all relative ${toolMode === 'binder'
+            ? 'text-[#5E6AD2]'
+            : 'text-[#8A8F98] hover:text-[#EDEDEF]'
+            }`}
+        >
+          Audiobook Binder
+          {toolMode === 'binder' && (
+            <motion.div
+              layoutId="activeTab"
+              className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#5E6AD2]"
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            />
+          )}
+        </button>
+        <button
+          onClick={() => setToolMode('converter')}
+          className={`px-6 py-3 font-medium transition-all relative ${toolMode === 'converter'
+            ? 'text-[#5E6AD2]'
+            : 'text-[#8A8F98] hover:text-[#EDEDEF]'
+            }`}
+        >
+          Format Converter
+          {toolMode === 'converter' && (
+            <motion.div
+              layoutId="activeTab"
+              className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#5E6AD2]"
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            />
+          )}
+        </button>
+      </div>
+
       {/* Step Content */}
       <AnimatePresence mode="wait">
         {currentStep === 1 && (
@@ -217,6 +257,9 @@ export default function Dashboard() {
             onBack={prevStep}
             currentStep={currentStep}
           />
+        )}
+        {toolMode === 'converter' && (
+          <Converter key="converter" />
         )}
       </AnimatePresence>
 

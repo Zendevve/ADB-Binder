@@ -33,6 +33,20 @@ contextBridge.exposeInMainWorld('electron', {
     removeProgressListener: () => {
       ipcRenderer.removeAllListeners('audio:progress');
     },
+    // Format conversion
+    convert: (request: { inputPath: string; outputFormat: string; bitrate?: string }) =>
+      ipcRenderer.invoke('audio:convert', request),
+    batchConvert: (requests: Array<{ inputPath: string; outputFormat: string; bitrate?: string }>) =>
+      ipcRenderer.invoke('audio:batchConvert', requests),
+  },
+  // For direct IPC access (required for image upload events)
+  ipcRenderer: {
+    on: (channel: string, callback: (...args: any[]) => void) => {
+      ipcRenderer.on(channel, callback);
+    },
+    removeAllListeners: (channel: string) => {
+      ipcRenderer.removeAllListeners(channel);
+    },
   },
   project: {
     save: (projectData: object) => ipcRenderer.invoke('project:save', projectData),
