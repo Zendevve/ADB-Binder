@@ -1,41 +1,153 @@
-# Audiobook Toolkit - AGENTS.md
+# AGENTS.md
 
-## Project Context
-**Project**: Audiobook Toolkit
-**Description**: Complete audiobook workflow solution. Merge, convert, and enhance audiobooks. Open Core model: Free to build from source, paid prebuilt binaries.
-**Stack**:
-- **Runtime**: Electron (Main Process), Node.js
-- **Frontend**: React, TypeScript, Vite
-- **Styling**: TailwindCSS, Shadcn/UI
-- **Audio Engine**: FFmpeg (via `fluent-ffmpeg` and `ffmpeg-static`)
-- **Testing**: Vitest (Unit/Integration), Playwright (E2E)
+Audiobook Toolkit — Electron + React + TypeScript + Node.js + FFmpeg
 
-## Commands
-- **Build**: `npm run build` (Compiles Electron and React)
-- **Dev**: `npm run dev` (Starts development server)
-- **Lint**: `npm run lint` (ESLint)
-- **Test**: `npm test` (Vitest - Unit & Integration)
-- **E2E**: `npm run e2e` (Playwright)
+Follows [MCAF](https://mcaf.managed-code.com/)
 
-## Development Flow (MCAF)
-1.  **Describe**: Read/Update `docs/Features/` and `docs/ADR/` before coding.
-2.  **Plan**: Propose changes covering files, tests, and docs.
-3.  **Implement**: Write tests and code together.
-    - **Verification Rule**: Use *real* dependencies. Do not mock FFmpeg; use sample audio files in tests.
-4.  **Verify**: Run `npm test` and `npm run lint`.
-5.  **Update**: Update docs if behavior evolved.
+---
 
-## Coding Rules
-- **No iTunes Dependency**: The system MUST NOT rely on iTunes installation.
-- **Strict Typing**: No `any`. Use TypeScript interfaces for all data structures.
-- **Constants**: Centralize configuration in `src/config/` or similar. Do not hardcode paths or magic numbers.
-- **Path Handling**: Use `path` module for cross-platform compatibility (Windows/macOS).
+## Conversations (Self-Learning)
 
-## Testing Discipline
-- **Integration over Unit**: Prefer tests that actually invoke the audio processing logic over mocking the wrapper.
-- **Real Files**: maintain a `test-assets/` folder with small dummy MP3s for testing merge logic.
-- **Static Analysis**: ESLint must pass.
+Learn the user's habits, preferences, and working style. Extract rules from conversations, save to "## Rules to follow", and generate code according to the user's personal rules.
 
-## Self-Learning
-- **Pattern**: User prefers "Director's Cut" / Premium aesthetics.
-- **Constraint**: Strict adherence to MCAF structure.
+**Update requirement (core mechanism):**
+
+Before doing ANY task, evaluate the latest user message.
+If you detect a new rule, correction, preference, or change → update `AGENTS.md` first.
+Only after updating the file you may produce the task output.
+If no new rule is detected → do not update the file.
+
+**When to extract rules:**
+
+- prohibition words (never, don't, stop, avoid) or similar → add NEVER rule
+- requirement words (always, must, make sure, should) or similar → add ALWAYS rule
+- memory words (remember, keep in mind, note that) or similar → add rule
+- process words (the process is, the workflow is, we do it like) or similar → add to workflow
+- future words (from now on, going forward) or similar → add permanent rule
+
+**Preferences → add to Preferences section:**
+
+- positive (I like, I prefer, this is better) or similar → Likes
+- negative (I don't like, I hate, this is bad) or similar → Dislikes
+- comparison (prefer X over Y, use X instead of Y) or similar → preference rule
+
+**Corrections → update or add rule:**
+
+- error indication (this is wrong, incorrect, broken) or similar → fix and add rule
+- repetition frustration (don't do this again, you ignored, you missed) or similar → emphatic rule
+- manual fixes by user → extract what changed and why
+
+**Strong signal (add IMMEDIATELY):**
+
+- swearing, frustration, anger, sarcasm → critical rule
+- ALL CAPS, excessive punctuation (!!!, ???) → high priority
+- same mistake twice → permanent emphatic rule
+- user undoes your changes → understand why, prevent
+
+**Ignore (do NOT add):**
+
+- temporary scope (only for now, just this time, for this task) or similar
+- one-off exceptions
+- context-specific instructions for current task only
+
+**Rule format:**
+
+- One instruction per bullet
+- Tie to category (Testing, Code, Docs, etc.)
+- Capture WHY, not just what
+- Remove obsolete rules when superseded
+
+---
+
+## Rules to follow (Mandatory, no exceptions)
+
+### Commands
+
+- build: `npm run build`
+- test: `npm test` (when test suite exists)
+- format: `npm run format` (if configured)
+- dev: `npm run dev`
+
+### Task Delivery (ALL TASKS)
+
+- Read assignment, inspect code and docs before planning
+- Write multi-step plan before implementation
+- **Write feature docs BEFORE coding** (mandatory for non-trivial features)
+- Implement code and tests together
+- Run tests in layers: new → related suite → broader regressions
+- After all tests pass: run format, then build
+- Summarize changes and test results before marking complete
+- Always run required builds and tests yourself; do not ask the user to execute them
+
+### Documentation (ALL TASKS)
+
+- All docs live in `docs/` directory
+- Update feature docs when behaviour changes
+- Update ADRs when architecture changes
+- Templates: `docs/templates/ADR-Template.md`, `docs/templates/Feature-Template.md`
+
+### Testing (ALL TASKS)
+
+- Every behaviour change needs sufficient automated tests to cover its cases; one is the minimum, not the target
+- Each public API endpoint has at least one test; complex endpoints have tests for different inputs and errors
+- Integration tests must exercise real flows end-to-end, not just call endpoints in isolation
+- Prefer integration/API/UI tests over unit tests
+- **No mocks for internal systems** (databases, queues, caches, FFmpeg) — use real processes
+- Mocks only for external third-party systems (payment gateways, SMS, external APIs)
+- Never delete or weaken a test to make it pass
+- Each test verifies a real flow or scenario, not just calls a function — tests without meaningful assertions are forbidden
+- Check code coverage to see which functionality is actually tested; coverage is for finding gaps, not a number to chase
+
+### Autonomy
+
+- Start work immediately — no permission seeking
+- Questions only for architecture blockers not covered by ADR
+- Report only when task is complete
+
+### Code Style
+
+- Follow existing TypeScript/React patterns
+- No magic literals — extract to constants, enums, config
+- Keep components focused and reusable
+- Use TypeScript types, avoid `any`
+
+### Critical (NEVER violate)
+
+- Never commit secrets, keys, connection strings
+- Never mock internal systems (FFmpeg, filesystem) in integration tests
+- Never skip tests to make PR green
+- Never force push to master
+- Never approve or merge (human decision)
+- **ALWAYS follow MCAF from this point onwards** (user directive with extreme emphasis)
+
+### Boundaries
+
+**Always:**
+
+- Read AGENTS.md and docs before editing code
+- Run tests before commit
+
+**Ask first:**
+
+- Changing Electron IPC contracts
+- Adding new npm dependencies
+- Modifying audio processing pipeline
+- Deleting code files
+
+---
+
+## Preferences
+
+### Likes
+
+- Open Core monetization model (source code free, binaries paid)
+- Modern, beautiful UI with dark mode
+- Emojis in documentation for scannability
+- Transparent communication about limitations (e.g., unsigned binaries)
+- GPL-3.0 + Commons Clause licensing
+
+### Dislikes
+
+- Tiered monetization / paywalls in source code
+- Mocking internal dependencies in tests
+- Vague or incomplete documentation
