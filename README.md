@@ -18,7 +18,7 @@ Built with Electron, React, TypeScript, and Vite.
 **Audiobook Binder** follows an **Open Core** philosophy.
 
 - **Source Code is Free**: The full source code is available here under the **GPL-3.0 with Commons Clause** license. You are free to clone, modify, and build the application yourself for personal use.
-- **Convenience is Paid**: To support development, we offer prebuilt, signed installers and portable executables for a small fee. This saves you the time of setting up a build environment.
+- **Convenience is Paid**: To support development, we offer prebuilt installers and portable executables for a small fee. This saves you the time of setting up a build environment.
 
 **Every feature is available in the source code.** There are no features locked behind a paywall in the code itself.
 
@@ -72,6 +72,19 @@ If you enjoy using Audiobook Binder and want to support its continued developmen
 
 - [Buying a prebuilt binary on Gumroad](https://zendevve.gumroad.com/l/audiobook-binder)
 - [Sponsoring me on GitHub](https://github.com/sponsors/Zendevve)
+
+## Note on Windows SmartScreen
+
+> [!WARNING]
+> **"Windows protected your PC"**
+>
+> Because I am a student developer, I cannot currently afford the expensive code signing certificates required by Microsoft.
+>
+> When you first run the installer, you may see a blue "Windows protected your PC" popup. This does **not** mean the file is malicious; it simply means it's from an "unknown publisher" (me).
+>
+> **To install:** Click **"More info"** -> **"Run anyway"**.
+>
+> The source code is 100% open and you can build it yourself if you prefer!
 
 ## License
 
