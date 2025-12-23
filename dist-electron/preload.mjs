@@ -1,28 +1,27 @@
-import { contextBridge, ipcRenderer, webUtils } from "electron";
-contextBridge.exposeInMainWorld("electron", {
-  openFiles: () => ipcRenderer.invoke("dialog:open-files"),
+import { contextBridge as n, ipcRenderer as o, webUtils as t } from "electron";
+n.exposeInMainWorld("electron", {
+  openFiles: () => o.invoke("dialog:open-files"),
   // Window controls
-  minimize: () => ipcRenderer.send("window:minimize"),
-  maximize: () => ipcRenderer.send("window:maximize"),
-  close: () => ipcRenderer.send("window:close"),
+  minimize: () => o.send("window:minimize"),
+  maximize: () => o.send("window:maximize"),
+  close: () => o.send("window:close"),
   audio: {
-    getPathForFile: (file) => {
-      const path = webUtils.getPathForFile(file);
-      console.log("[PRELOAD] getPathForFile:", file.name, "->", path);
-      return path;
+    getPathForFile: (e) => {
+      const i = t.getPathForFile(e);
+      return console.log("[PRELOAD] getPathForFile:", e.name, "->", i), i;
     },
-    readMetadata: (filePath) => ipcRenderer.invoke("audio:read-metadata", filePath),
-    process: (options) => ipcRenderer.invoke("audio:process", options),
-    detectArtwork: (filePaths) => ipcRenderer.invoke("audio:detect-artwork", filePaths),
-    onProgress: (callback) => {
-      ipcRenderer.on("audio:progress", (_, progress) => callback(progress));
+    readMetadata: (e) => o.invoke("audio:read-metadata", e),
+    process: (e) => o.invoke("audio:process", e),
+    detectArtwork: (e) => o.invoke("audio:detect-artwork", e),
+    onProgress: (e) => {
+      o.on("audio:progress", (i, r) => e(r));
     },
     removeProgressListener: () => {
-      ipcRenderer.removeAllListeners("audio:progress");
+      o.removeAllListeners("audio:progress");
     }
   },
   project: {
-    save: (projectData) => ipcRenderer.invoke("project:save", projectData),
-    load: () => ipcRenderer.invoke("project:load")
+    save: (e) => o.invoke("project:save", e),
+    load: () => o.invoke("project:load")
   }
 });

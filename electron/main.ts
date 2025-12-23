@@ -29,7 +29,7 @@ const createWindow = () => {
     },
     autoHideMenuBar: true,
     backgroundColor: '#050506',
-    title: 'ADB Binder',
+    title: 'Audiobook Binder',
     frame: false, // Frameless for custom titlebar
     minWidth: 900,
     minHeight: 600,
@@ -91,7 +91,6 @@ interface ProcessOptions {
   outputFormat: 'm4b' | 'aac' | 'mp3';
   bitrate: string;
   coverPath?: string;
-  licenseTier?: 'FREE' | 'PRO' | 'STUDIO';
   bookMetadata?: {
     title: string;
     author: string;
@@ -287,8 +286,7 @@ ipcMain.handle('audio:detect-artwork', async (_event, filePaths: string[]) => {
 
 // Process and merge audio files using filter_complex
 ipcMain.handle('audio:process', async (_event, options: ProcessOptions) => {
-  const { files, bitrate, outputFormat, coverPath, bookMetadata, licenseTier } = options;
-  const isFreeUser = !licenseTier || licenseTier === 'FREE';
+  const { files, bitrate, outputFormat, coverPath, bookMetadata } = options;
 
   if (!files || files.length === 0) {
     throw new Error('No files to process');
@@ -402,12 +400,7 @@ ipcMain.handle('audio:process', async (_event, options: ProcessOptions) => {
         if (bookMetadata.narrator) outputOptions.push('-metadata', `composer=${bookMetadata.narrator}`);
       }
 
-      // Add watermark for FREE tier users
-      if (isFreeUser) {
-        outputOptions.push('-metadata', 'comment=Made with ADB Binder - https://adb-binder.com');
-        outputOptions.push('-metadata', 'encoder=ADB Binder (Free)');
-        console.log('[MERGE] Adding FREE tier watermark to metadata');
-      }
+
     }
 
     command

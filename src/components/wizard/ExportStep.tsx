@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Disc, ArrowLeft, FileAudio, Clock, AlertTriangle, Crown, Lock } from 'lucide-react';
+import { Disc, ArrowLeft, FileAudio, Clock, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { StepIndicator } from '@/components/wizard/StepIndicator';
-import { UpgradeModal } from '@/components/UpgradeModal';
 import type { AudioFile } from '@/types';
 import type { BookMetadata } from '@/components/MetadataPanel';
 import { cn } from '@/lib/utils';
-import { useLicenseStore } from '@/lib/license-store';
 
 type OutputFormat = 'm4b' | 'mp3' | 'aac';
 type Bitrate = '64k' | '96k' | '128k' | '192k';
@@ -39,9 +37,6 @@ export function ExportStep({
   onBack,
   currentStep,
 }: ExportStepProps) {
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const isPro = useLicenseStore((s) => s.isPro());
-
   const totalDuration = files.reduce((acc, f) => acc + (f.metadata.duration || 0), 0);
 
   const formatDuration = () => {
@@ -53,24 +48,14 @@ export function ExportStep({
 
   const showMp3Warning = outputFormat === 'mp3' && files.length > 1;
 
-  // Handle format change with PRO check
-  // FREE tier = MP3 only (supports ID3v2 chapters)
-  // PRO tier = M4B/AAC (better audiobook player support)
+  // Handle format change
   const handleFormatChange = (value: string) => {
-    if (!isPro && value !== 'mp3') {
-      setShowUpgradeModal(true);
-      return;
-    }
     onFormatChange(value as OutputFormat);
     setSelectedPreset('custom');
   };
 
-  // Handle bitrate change with PRO check
+  // Handle bitrate change
   const handleBitrateChange = (value: string) => {
-    if (!isPro && value !== '64k') {
-      setShowUpgradeModal(true);
-      return;
-    }
     onBitrateChange(value as Bitrate);
     setSelectedPreset('custom');
   };
@@ -90,11 +75,6 @@ export function ExportStep({
         break;
       case 'high':
         // High Quality: M4B with higher bitrate
-        if (!isPro) {
-          setShowUpgradeModal(true);
-          setSelectedPreset('spoken');
-          return;
-        }
         onFormatChange('m4b');
         onBitrateChange('128k');
         break;
@@ -188,7 +168,6 @@ export function ExportStep({
                     )}
                   >
                     High Quality
-                    {!isPro && <Lock className="w-3 h-3 text-amber-400" />}
                   </button>
                   <button
                     onClick={() => handlePresetChange('custom')}
@@ -217,13 +196,11 @@ export function ExportStep({
                       <SelectItem value="m4b">
                         <span className="flex items-center gap-2">
                           M4B (Audiobook)
-                          {!isPro && <Lock className="w-3 h-3 text-amber-400" />}
                         </span>
                       </SelectItem>
                       <SelectItem value="aac">
                         <span className="flex items-center gap-2">
                           AAC
-                          {!isPro && <Lock className="w-3 h-3 text-amber-400" />}
                         </span>
                       </SelectItem>
                     </SelectContent>
@@ -242,19 +219,16 @@ export function ExportStep({
                       <SelectItem value="96k">
                         <span className="flex items-center gap-2">
                           96 kbps
-                          {!isPro && <Lock className="w-3 h-3 text-amber-400" />}
                         </span>
                       </SelectItem>
                       <SelectItem value="128k">
                         <span className="flex items-center gap-2">
                           128 kbps
-                          {!isPro && <Lock className="w-3 h-3 text-amber-400" />}
                         </span>
                       </SelectItem>
                       <SelectItem value="192k">
                         <span className="flex items-center gap-2">
                           192 kbps
-                          {!isPro && <Lock className="w-3 h-3 text-amber-400" />}
                         </span>
                       </SelectItem>
                     </SelectContent>
@@ -262,19 +236,7 @@ export function ExportStep({
                 </div>
               </div>
 
-              {/* FREE Tier Notice */}
-              {!isPro && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-[#5E6AD2]/10 border border-[#5E6AD2]/20 text-[#5E6AD2] text-sm">
-                  <Crown className="w-4 h-4 flex-shrink-0" />
-                  <span>FREE tier: MP3 format, 64kbps, with watermark</span>
-                  <button
-                    onClick={() => setShowUpgradeModal(true)}
-                    className="ml-auto text-xs underline hover:no-underline"
-                  >
-                    Upgrade
-                  </button>
-                </div>
-              )}
+
 
               {/* MP3 Warning */}
               {showMp3Warning && (
@@ -322,12 +284,6 @@ export function ExportStep({
         </div>
       </motion.div>
 
-      {/* Upgrade Modal */}
-      <UpgradeModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        featureName="All Formats & Bitrates"
-      />
     </>
   );
 }

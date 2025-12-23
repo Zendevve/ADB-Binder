@@ -5,11 +5,9 @@ import { UploadStep } from '@/components/wizard/UploadStep';
 import { ArrangeStep } from '@/components/wizard/ArrangeStep';
 import { MetadataStep } from '@/components/wizard/MetadataStep';
 import { ExportStep } from '@/components/wizard/ExportStep';
-import { UpgradeModal } from '@/components/UpgradeModal';
 import { defaultMetadata } from '@/components/MetadataPanel';
 import type { BookMetadata } from '@/components/MetadataPanel';
 import { AudioAnalyzer } from '@/lib/audio-analyzer';
-import { useLicenseStore } from '@/lib/license-store';
 import type { AudioFile } from '@/types';
 
 type OutputFormat = 'm4b' | 'mp3' | 'aac';
@@ -27,8 +25,7 @@ export default function Dashboard() {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState({ percent: 0, timemark: '' });
 
-  // License state
-  const licenseTier = useLicenseStore((s) => s.tier);
+
 
   // File handlers
   const addFiles = useCallback(async (newFiles: AudioFile[]) => {
@@ -96,7 +93,6 @@ export default function Dashboard() {
         coverPath: metadata.coverData, // Pass cover data
         outputFormat,
         bitrate,
-        licenseTier, // Pass license tier for watermark logic
       });
 
       if (result.success) {
@@ -107,22 +103,12 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('Processing error:', error);
-    } finally {
       setProcessing(false);
     }
-  }, [files, metadata, outputFormat, bitrate, licenseTier]);
-
-  // Project State
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const isPro = useLicenseStore((s) => s.isPro());
+  }, [files, metadata, outputFormat, bitrate]);
 
   // Save Project Handler
   const handleSaveProject = useCallback(async () => {
-    if (!isPro) {
-      setShowUpgradeModal(true);
-      return;
-    }
-
     const projectData = {
       version: 1,
       createdAt: new Date().toISOString(),
@@ -146,15 +132,10 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Save project error:', error);
     }
-  }, [isPro, files, metadata, outputFormat, bitrate]);
+  }, [files, metadata, outputFormat, bitrate]);
 
   // Load Project Handler
   const handleLoadProject = useCallback(async () => {
-    if (!isPro) {
-      setShowUpgradeModal(true);
-      return;
-    }
-
     try {
       // @ts-expect-error Electron IPC
       const result = await window.electron.project.load();
@@ -173,7 +154,7 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Load project error:', error);
     }
-  }, [isPro]);
+  }, []);
 
   return (
     <div className="h-screen flex flex-col relative overflow-hidden">
@@ -268,8 +249,6 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      {/* Upgrade Modal */}
-      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
     </div>
   );
 }

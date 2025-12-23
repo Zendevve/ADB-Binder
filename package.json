@@ -1,7 +1,14 @@
 {
-  "name": "adb-binder",
+  "name": "audiobook-binder",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "A modern, open-core audiobook creation tool that merges audio files and adds chapter markers.",
+  "author": "Zendevve",
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Zendevve/audiobook-binder"
+  },
   "main": "dist-electron/main.js",
   "type": "module",
   "scripts": {

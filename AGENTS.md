@@ -1,8 +1,8 @@
-# Modern MarkAble - AGENTS.md
+# Audiobook Binder - AGENTS.md
 
 ## Project Context
-**Project**: Modern MarkAble
-**Description**: A modern, desktop-based audiobook creation tool that merges audio files and adds chapter markers. Rebuild of the legacy "MarkAble" tool.
+**Project**: Audiobook Binder
+**Description**: A modern, desktop-based audiobook creation tool that merges audio files and adds chapter markers. Open Core model: Free to build from source, paid prebuilt binaries.
 **Stack**:
 - **Runtime**: Electron (Main Process), Node.js
 - **Frontend**: React, TypeScript, Vite

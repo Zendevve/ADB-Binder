@@ -14,8 +14,6 @@ import {
   FileText,
   Tags,
   Loader2,
-  Crown,
-  Lock,
   Wand2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,9 +22,7 @@ import { Label } from '@/components/ui/label';
 import { StepIndicator } from '@/components/wizard/StepIndicator';
 import type { BookMetadata } from '@/components/MetadataPanel';
 import { cn } from '@/lib/utils';
-import { useLicenseStore, useRequiresPro } from '@/lib/license-store';
 import { autoFillBookMetadata } from '@/lib/open-library';
-import freeCoverImage from '@/assets/free-cover.png';
 import type { AudioFile } from '@/types';
 
 interface MetadataStepProps {
@@ -42,21 +38,10 @@ export function MetadataStep({ files, metadata, onChange, onNext, onBack, curren
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showDescription, setShowDescription] = useState(!!metadata.description);
   const [autoFillLoading, setAutoFillLoading] = useState(false);
-  const [showUpgradeHint, setShowUpgradeHint] = useState(false);
   const [artworkLoading, setArtworkLoading] = useState(false);
-
-  const requiresPro = useRequiresPro('ai_autofill');
-  const requiresProArtwork = useRequiresPro('smart_artwork');
-  const isPro = useLicenseStore((s) => s.isPro());
 
   // Smart Artwork Detection
   const handleDetectArtwork = async () => {
-    if (requiresProArtwork) {
-      setShowUpgradeHint(true);
-      setTimeout(() => setShowUpgradeHint(false), 3000);
-      return;
-    }
-
     // Get file paths from audio files
     const filePaths = files.map(f => (f.file as any).path).filter(Boolean);
     if (filePaths.length === 0) return;
@@ -97,12 +82,6 @@ export function MetadataStep({ files, metadata, onChange, onNext, onBack, curren
   };
 
   const handleAutoFill = async () => {
-    if (requiresPro) {
-      setShowUpgradeHint(true);
-      setTimeout(() => setShowUpgradeHint(false), 3000);
-      return;
-    }
-
     const query = metadata.title || 'untitled';
     if (!query.trim()) return;
 
@@ -168,64 +147,46 @@ export function MetadataStep({ files, metadata, onChange, onNext, onBack, curren
           <div className="flex-shrink-0">
             <Label className="text-xs text-[#8A8F98] mb-2 flex items-center gap-1.5">
               Cover Art
-              {!isPro && <Lock className="w-3 h-3 text-amber-400" />}
             </Label>
 
-            {isPro ? (
-              // PRO users can upload custom cover
-              <div
-                {...getCoverRootProps()}
-                className={cn(
-                  "w-40 h-40 rounded-2xl border-2 border-dashed cursor-pointer",
-                  "flex items-center justify-center overflow-hidden transition-all duration-200",
-                  isCoverDragActive
-                    ? "border-[#5E6AD2] bg-[#5E6AD2]/10"
-                    : "border-white/[0.08] hover:border-[#5E6AD2]/30 hover:bg-white/[0.02]"
-                )}
-              >
-                <input {...getCoverInputProps()} />
-                {metadata.coverData ? (
-                  <div className="relative w-full h-full group">
-                    <img
-                      src={metadata.coverData}
-                      alt="Cover"
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onChange({ ...metadata, coverData: undefined });
-                      }}
-                      className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-4 h-4 text-white" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="text-center p-4">
-                    <ImageIcon className="w-10 h-10 mx-auto text-[#8A8F98] mb-2" />
-                    <span className="text-sm text-[#8A8F98]">
-                      {isCoverDragActive ? "Drop image" : "Add Cover"}
-                    </span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              // FREE users see branded cover
-              <div className="relative w-40 h-40 rounded-2xl overflow-hidden border-2 border-amber-500/30">
-                <img
-                  src={freeCoverImage}
-                  alt="Free Tier Cover"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center pb-2">
-                  <div className="flex items-center gap-1 text-amber-400 text-xs">
-                    <Crown className="w-3 h-3" />
-                    <span>PRO</span>
-                  </div>
+            {/* Cover Upload Area */}
+            <div
+              {...getCoverRootProps()}
+              className={cn(
+                "w-40 h-40 rounded-2xl border-2 border-dashed cursor-pointer",
+                "flex items-center justify-center overflow-hidden transition-all duration-200",
+                isCoverDragActive
+                  ? "border-[#5E6AD2] bg-[#5E6AD2]/10"
+                  : "border-white/[0.08] hover:border-[#5E6AD2]/30 hover:bg-white/[0.02]"
+              )}
+            >
+              <input {...getCoverInputProps()} />
+              {metadata.coverData ? (
+                <div className="relative w-full h-full group">
+                  <img
+                    src={metadata.coverData}
+                    alt="Cover"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onChange({ ...metadata, coverData: undefined });
+                    }}
+                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-4 h-4 text-white" />
+                  </button>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="text-center p-4">
+                  <ImageIcon className="w-10 h-10 mx-auto text-[#8A8F98] mb-2" />
+                  <span className="text-sm text-[#8A8F98]">
+                    {isCoverDragActive ? "Drop image" : "Add Cover"}
+                  </span>
+                </div>
+              )}
+            </div>
 
             {/* Smart Artwork Button */}
             <Button
@@ -241,7 +202,6 @@ export function MetadataStep({ files, metadata, onChange, onNext, onBack, curren
                 <Wand2 className="w-3 h-3" />
               )}
               <span>Smart Artwork</span>
-              {requiresProArtwork && <Lock className="w-3 h-3 text-amber-400" />}
             </Button>
           </div>
 
@@ -276,9 +236,7 @@ export function MetadataStep({ files, metadata, onChange, onNext, onBack, curren
                   disabled={autoFillLoading}
                   className={cn(
                     "h-11 px-4 rounded-xl font-medium transition-all duration-200",
-                    isPro
-                      ? "bg-gradient-to-r from-[#5E6AD2] to-[#7C3AED] hover:opacity-90 text-white"
-                      : "bg-white/[0.05] border border-white/10 text-[#8A8F98] hover:text-[#EDEDEF] hover:bg-white/[0.08]"
+                    "bg-gradient-to-r from-[#5E6AD2] to-[#7C3AED] hover:opacity-90 text-white"
                   )}
                 >
                   {autoFillLoading ? (
@@ -287,24 +245,11 @@ export function MetadataStep({ files, metadata, onChange, onNext, onBack, curren
                     <>
                       <Sparkles className="w-4 h-4 mr-2" />
                       Auto-fill
-                      {!isPro && <Crown className="w-3 h-3 ml-1.5 text-amber-400" />}
                     </>
                   )}
                 </Button>
 
-                {/* Upgrade Hint */}
-                <AnimatePresence>
-                  {showUpgradeHint && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 5 }}
-                      className="absolute top-full right-0 mt-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs text-center whitespace-nowrap z-50"
-                    >
-                      Upgrade to PRO to unlock
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+
               </div>
             </div>
 

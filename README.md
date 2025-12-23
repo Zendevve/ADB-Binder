@@ -1,73 +1,89 @@
-# React + TypeScript + Vite
+# Audiobook Binder
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+<div align="center">
 
-Currently, two official plugins are available:
+![Audiobook Binder Banner](https://raw.githubusercontent.com/Zendevve/audiobook-binder/main/resources/banner.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+A modern, open-core audiobook creation tool that merges audio files and adds chapter markers using FFmpeg.
+Built with Electron, React, TypeScript, and Vite.
 
-## React Compiler
+[Download Prebuilt Binary via Gumroad](https://zendevve.gumroad.com/l/audiobook-binder) · [Support on GitHub](https://github.com/sponsors/Zendevve)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+</div>
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Philosophy: Open Core
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+**Audiobook Binder** follows an **Open Core** philosophy.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- **Source Code is Free**: The full source code is available here under the **GPL-3.0 with Commons Clause** license. You are free to clone, modify, and build the application yourself for personal use.
+- **Convenience is Paid**: To support development, we offer prebuilt, signed installers and portable executables for a small fee. This saves you the time of setting up a build environment.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+**Every feature is available in the source code.** There are no features locked behind a paywall in the code itself.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Features
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **Merge Audio**: Combine multiple MP3/M4A/M4B files into a single audiobook.
+- **Chapter Markers**: Automatically preservation of chapters or custom chapter creation.
+- **Metadata Editor**: Rich metadata editing (Title, Author, Narrator, Series, Cover Art).
+- **Format Support**: Output to **M4B** (AAC), **MP3**, or **AAC**.
+- **Smart Features**: Auto-fill metadata from online sources, smart artwork detection.
+- **Modern UI**: A beautiful, dark-mode interface designed for ease of use.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Building from Source
+
+If you prefer to build the application yourself, follow these steps:
+
+### Prerequisites
+
+- **Node.js**: v18 or higher
+- **FFmpeg**: Must be installed and available in your system PATH.
+
+### Steps
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/Zendevve/audiobook-binder.git
+    cd audiobook-binder
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
+
+3.  **Start Development Server:**
+    ```bash
+    npm run dev
+    ```
+
+4.  **Build for Production:**
+    ```bash
+    npm run build
+    ```
+    The output binaries/installers will be in the `dist` folder.
+
+## Support Development
+
+If you enjoy using Audiobook Binder and want to support its continued development, please consider:
+
+- [Buying a prebuilt binary on Gumroad](https://zendevve.gumroad.com/l/audiobook-binder)
+- [Sponsoring me on GitHub](https://github.com/sponsors/Zendevve)
+
+## License
+
+This project is licensed under the **GNU General Public License v3.0** with the **Commons Clause** addendum.
+
+**You may:**
+- Use the software for free.
+- Modify the source code for personal use.
+- Share your modifications (under the same license).
+
+**You may NOT:**
+- Sell this software.
+- Sell a service that consists substantially of this software.
+
+See the [LICENSE](LICENSE) file for details.
