@@ -4,16 +4,20 @@
 
 ![Audiobook Binder Banner](https://raw.githubusercontent.com/Zendevve/audiobook-binder/main/resources/banner.png)
 
-A modern, open-core audiobook creation tool that merges audio files and adds chapter markers using FFmpeg.
-Built with Electron, React, TypeScript, and Vite.
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Electron](https://img.shields.io/badge/Electron-28-2B2E3A?logo=electron)](https://www.electronjs.org/)
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-[Download Prebuilt Binary via Gumroad](https://zendevve.gumroad.com/l/audiobook-binder) · [Support on GitHub](https://github.com/sponsors/Zendevve)
+**A modern, open-core audiobook creation tool that merges audio files and adds chapter markers.**
+
+[Download Prebuilt Binary](https://zendevve.gumroad.com/l/audiobook-binder) · [Report Bug](https://github.com/Zendevve/audiobook-binder/issues) · [Support Development](https://github.com/sponsors/Zendevve)
 
 </div>
 
 ---
 
-## Philosophy: Open Core
+## 📖 Philosophy: Open Core
 
 **Audiobook Binder** follows an **Open Core** philosophy.
 
@@ -22,16 +26,23 @@ Built with Electron, React, TypeScript, and Vite.
 
 **Every feature is available in the source code.** There are no features locked behind a paywall in the code itself.
 
-## Features
+## ✨ Features
 
-- **Merge Audio**: Combine multiple MP3/M4A/M4B files into a single audiobook.
-- **Chapter Markers**: Automatically preservation of chapters or custom chapter creation.
-- **Metadata Editor**: Rich metadata editing (Title, Author, Narrator, Series, Cover Art).
-- **Format Support**: Output to **M4B** (AAC), **MP3**, or **AAC**.
-- **Smart Features**: Auto-fill metadata from online sources, smart artwork detection.
-- **Modern UI**: A beautiful, dark-mode interface designed for ease of use.
+- 📚 **Merge Audio**: Combine multiple MP3/M4A/M4B files into a single audiobook.
+- 🔖 **Chapter Markers**: Automatically preserve chapters or create custom ones.
+- 📝 **Metadata Editor**: Rich editing for Title, Author, Narrator, Series, and Cover Art.
+- 🎧 **Format Support**: Output to **M4B** (AAC), **MP3**, or **AAC**.
+- 🪄 **Smart Features**: Auto-fill metadata from online sources, smart artwork detection.
+- 🎨 **Modern UI**: A beautiful, dark-mode interface designed for ease of use.
 
-## Building from Source
+## 🚀 How to Use
+
+1.  **Import Files**: Drag and drop your audio files into the window.
+2.  **Arrange**: Reorder files if needed to ensure chapters are in the correct sequence.
+3.  **Edit Metadata**: Add the book title, author, and cover art. Use "Auto-fill" to fetch data automatically.
+4.  **Export**: Choose your format (M4B recommended for audiobooks) and click Export.
+
+## 🛠️ Building from Source
 
 If you prefer to build the application yourself, follow these steps:
 
@@ -66,19 +77,12 @@ If you prefer to build the application yourself, follow these steps:
     ```
     The output binaries/installers will be in the `dist` folder.
 
-## Support Development
-
-If you enjoy using Audiobook Binder and want to support its continued development, please consider:
-
-- [Buying a prebuilt binary on Gumroad](https://zendevve.gumroad.com/l/audiobook-binder)
-- [Sponsoring me on GitHub](https://github.com/sponsors/Zendevve)
-
-## Note on Windows SmartScreen
+## ⚠️ Note on Windows SmartScreen
 
 > [!WARNING]
 > **"Windows protected your PC"**
 >
-> Because I am a student developer, I cannot currently afford the expensive code signing certificates required by Microsoft.
+> Because I am a student developer, I cannot currently afford the expensive code signing certificates required by Microsoft (**~$400/year**).
 >
 > When you first run the installer, you may see a blue "Windows protected your PC" popup. This does **not** mean the file is malicious; it simply means it's from an "unknown publisher" (me).
 >
@@ -86,7 +90,14 @@ If you enjoy using Audiobook Binder and want to support its continued developmen
 >
 > The source code is 100% open and you can build it yourself if you prefer!
 
-## License
+## 💖 Support Development
+
+If you enjoy using Audiobook Binder and want to support its continued development, please consider:
+
+- [Buying a prebuilt binary on Gumroad](https://zendevve.gumroad.com/l/audiobook-binder)
+- [Sponsoring me on GitHub](https://github.com/sponsors/Zendevve)
+
+## 📄 License
 
 This project is licensed under the **GNU General Public License v3.0** with the **Commons Clause** addendum.
 
