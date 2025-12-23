@@ -29,7 +29,7 @@ const createWindow = () => {
     },
     autoHideMenuBar: true,
     backgroundColor: '#050506',
-    title: 'Audiobook Binder',
+    title: 'Audiobook Toolkit',
     frame: false, // Frameless for custom titlebar
     minWidth: 900,
     minHeight: 600,

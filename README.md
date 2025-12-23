@@ -1,17 +1,18 @@
-# Audiobook Binder
+# Audiobook Toolkit
 
 <div align="center">
 
-![Audiobook Binder Banner](https://raw.githubusercontent.com/Zendevve/audiobook-binder/main/resources/banner.png)
+![Audiobook Toolkit Banner](https://raw.githubusercontent.com/Zendevve/audiobook-toolkit/main/resources/banner.png)
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Electron](https://img.shields.io/badge/Electron-28-2B2E3A?logo=electron)](https://www.electronjs.org/)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-**A modern, open-core audiobook creation tool that merges audio files and adds chapter markers.**
+**Your complete audiobook workflow solution.**
+Merge files, convert formats, and enhance audio - all in one beautiful desktop app.
 
-[Download Prebuilt Binary](https://zendevve.gumroad.com/l/audiobook-binder) · [Report Bug](https://github.com/Zendevve/audiobook-binder/issues) · [Support Development](https://github.com/sponsors/Zendevve)
+[Download Prebuilt Binary](https://zendevve.gumroad.com/l/audiobook-toolkit) · [Report Bug](https://github.com/Zendevve/audiobook-toolkit/issues) · [Support Development](https://github.com/sponsors/Zendevve)
 
 </div>
 
@@ -35,6 +36,8 @@
 - 🪄 **Smart Features**: Auto-fill metadata from online sources, smart artwork detection.
 - 🎨 **Modern UI**: A beautiful, dark-mode interface designed for ease of use.
 
+> 🚧 **Coming Soon**: Format Converter, Audio Enhancements, Chapter Editor, and more!
+
 ## 🚀 How to Use
 
 1.  **Import Files**: Drag and drop your audio files into the window.
@@ -55,8 +58,8 @@ If you prefer to build the application yourself, follow these steps:
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/Zendevve/audiobook-binder.git
-    cd audiobook-binder
+    git clone https://github.com/Zendevve/audiobook-toolkit.git
+    cd audiobook-toolkit
     ```
 
 2.  **Install dependencies:**
@@ -94,7 +97,7 @@ If you prefer to build the application yourself, follow these steps:
 
 If you enjoy using Audiobook Binder and want to support its continued development, please consider:
 
-- [Buying a prebuilt binary on Gumroad](https://zendevve.gumroad.com/l/audiobook-binder)
+- [Buying a prebuilt binary on Gumroad](https://zendevve.gumroad.com/l/audiobook-toolkit)
 - [Sponsoring me on GitHub](https://github.com/sponsors/Zendevve)
 
 ## 📄 License

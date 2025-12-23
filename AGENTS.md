@@ -1,8 +1,8 @@
-# Audiobook Binder - AGENTS.md
+# Audiobook Toolkit - AGENTS.md
 
 ## Project Context
-**Project**: Audiobook Binder
-**Description**: A modern, desktop-based audiobook creation tool that merges audio files and adds chapter markers. Open Core model: Free to build from source, paid prebuilt binaries.
+**Project**: Audiobook Toolkit
+**Description**: Complete audiobook workflow solution. Merge, convert, and enhance audiobooks. Open Core model: Free to build from source, paid prebuilt binaries.
 **Stack**:
 - **Runtime**: Electron (Main Process), Node.js
 - **Frontend**: React, TypeScript, Vite

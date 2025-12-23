@@ -1,13 +1,13 @@
 {
-  "name": "audiobook-binder",
+  "name": "audiobook-toolkit",
   "private": true,
-  "version": "0.1.0",
-  "description": "A modern, open-core audiobook creation tool that merges audio files and adds chapter markers.",
+  "version": "0.2.0",
+  "description": "Complete audiobook workflow solution - merge, convert, and enhance audiobooks with ease.",
   "author": "Zendevve",
   "license": "GPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Zendevve/audiobook-binder"
+    "url": "https://github.com/Zendevve/audiobook-toolkit"
   },
   "main": "dist-electron/main.js",
   "type": "module",
