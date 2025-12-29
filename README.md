@@ -12,7 +12,7 @@ Merge, convert, and enhance audiobooks - all in one beautiful desktop app.
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-[Download Prebuilt Binary](https://zendevve.gumroad.com/l/audiobook-toolkit) · [Report Bug](https://github.com/Zendevve/audiobook-toolkit/issues) · [Support Development](https://github.com/sponsors/Zendevve)
+[Download Prebuilt Binary](https://guinto2.gumroad.com/l/audiobooktoolkit) · [Report Bug](https://guinto2.gumroad.com/l/audiobooktoolkit) · [Support Development](https://github.com/sponsors/Zendevve)
 
 </div>
 
