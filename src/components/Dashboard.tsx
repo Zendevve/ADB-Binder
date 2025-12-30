@@ -400,6 +400,7 @@ export default function Dashboard() {
             onNext={nextStep}
             onBack={prevStep}
             currentStep={currentStep}
+            asin={metadata.asin}
           />
         )}
         {toolMode === 'binder' && currentStep === 3 && (

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GripVertical, FileMusic, X, Clock, ArrowRight, ArrowLeft } from 'lucide-react';
+import { GripVertical, FileMusic, X, Clock, ArrowRight, ArrowLeft, Download, Loader2 } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragOverlay } from '@dnd-kit/core';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StepIndicator } from '@/components/wizard/StepIndicator';
 import { AudioPreview } from '@/components/AudioPreview';
+import { getChaptersByAsin } from '@/lib/audnexus';
+import { toast } from 'sonner';
 import type { AudioFile } from '@/types';
 import { cn, formatDuration } from '@/lib/utils';
 
@@ -20,6 +22,7 @@ interface ArrangeStepProps {
   onNext: () => void;
   onBack: () => void;
   currentStep: number;
+  asin?: string; // ASIN from metadata for chapter import
 }
 
 
@@ -162,8 +165,11 @@ function DragOverlayItem({ file, index }: { file: AudioFile; index: number }) {
   );
 }
 
-export function ArrangeStep({ files, onFilesChange, onRemoveFile, onUpdateMetadata, onNext, onBack, currentStep }: ArrangeStepProps) {
+export function ArrangeStep({ files, onFilesChange, onRemoveFile, onUpdateMetadata, onNext, onBack, currentStep, asin }: ArrangeStepProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [showAsinInput, setShowAsinInput] = useState(false);
+  const [customAsin, setCustomAsin] = useState(asin || '');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -182,6 +188,62 @@ export function ArrangeStep({ files, onFilesChange, onRemoveFile, onUpdateMetada
       const oldIndex = files.findIndex((f) => f.id === active.id);
       const newIndex = files.findIndex((f) => f.id === over.id);
       onFilesChange(arrayMove(files, oldIndex, newIndex));
+    }
+  };
+
+  // Import chapter names from Audnexus
+  const handleImportChapters = async (asinToUse: string) => {
+    if (!asinToUse.trim()) {
+      toast.error('Please enter an ASIN');
+      return;
+    }
+
+    setImportLoading(true);
+    try {
+      const chaptersData = await getChaptersByAsin(asinToUse.trim());
+
+      if (!chaptersData || chaptersData.chapters.length === 0) {
+        toast.error('No chapters found', {
+          description: 'Could not find chapter data for this ASIN.',
+        });
+        return;
+      }
+
+      const chapters = chaptersData.chapters;
+
+      // Apply chapter names to files (in order)
+      const updatedFiles = files.map((file, index) => {
+        const chapter = chapters[index];
+        if (chapter) {
+          return {
+            ...file,
+            metadata: {
+              ...file.metadata,
+              title: chapter.title,
+            },
+          };
+        }
+        return file;
+      });
+
+      onFilesChange(updatedFiles);
+      setShowAsinInput(false);
+
+      const appliedCount = Math.min(files.length, chapters.length);
+      toast.success(`Imported ${appliedCount} chapter names`, {
+        description: chapters.length > files.length
+          ? `${chapters.length - files.length} chapters skipped (more chapters than files)`
+          : files.length > chapters.length
+            ? `${files.length - chapters.length} files unchanged (more files than chapters)`
+            : 'All chapters applied!',
+      });
+    } catch (error) {
+      console.error('Chapter import failed:', error);
+      toast.error('Import failed', {
+        description: 'Could not connect to Audnexus API.',
+      });
+    } finally {
+      setImportLoading(false);
     }
   };
 
@@ -219,6 +281,50 @@ export function ArrangeStep({ files, onFilesChange, onRemoveFile, onUpdateMetada
         <div className="flex items-center gap-2 text-sm">
           <Clock className="w-4 h-4 text-[#5E6AD2]" />
           <span className="text-[#EDEDEF]">{formatDuration(totalDuration, 'human')} total</span>
+        </div>
+
+        {/* Import Chapter Names */}
+        <div className="ml-auto flex items-center gap-2">
+          {showAsinInput ? (
+            <div className="flex items-center gap-2">
+              <Input
+                value={customAsin}
+                onChange={(e) => setCustomAsin(e.target.value)}
+                placeholder="Enter ASIN (e.g., B08G9PRS1K)"
+                className="h-8 w-48 bg-[#0F0F12] border-white/10 text-[#EDEDEF] text-sm font-mono"
+                onKeyDown={(e) => e.key === 'Enter' && handleImportChapters(customAsin)}
+              />
+              <Button
+                size="sm"
+                onClick={() => handleImportChapters(customAsin)}
+                disabled={importLoading || !customAsin.trim()}
+                className="h-8 bg-[#5E6AD2] hover:bg-[#6872D9] text-white"
+              >
+                {importLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Import'}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowAsinInput(false)}
+                className="h-8 text-[#8A8F98] hover:text-[#EDEDEF]"
+              >
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setCustomAsin(asin || '');
+                setShowAsinInput(true);
+              }}
+              className="h-8 text-[#8A8F98] hover:text-[#EDEDEF] hover:bg-white/[0.05]"
+            >
+              <Download className="w-3.5 h-3.5 mr-1.5" />
+              Import Chapter Names
+            </Button>
+          )}
         </div>
       </div>
 

@@ -24,6 +24,8 @@ import { StepIndicator } from '@/components/wizard/StepIndicator';
 import type { BookMetadata } from '@/types';
 import { cn } from '@/lib/utils';
 import { autoFillBookMetadata } from '@/lib/open-library';
+import { autoFillFromAudible } from '@/lib/audible';
+import { getAudnexusMetadata } from '@/lib/audnexus';
 import type { AudioFile } from '@/types';
 
 interface MetadataStepProps {
@@ -96,6 +98,65 @@ export function MetadataStep({ files, metadata, onChange, onNext, onBack, curren
 
     setAutoFillLoading(true);
     try {
+      // Priority 1: If we have an ASIN, use Audnexus API directly (most reliable)
+      if (metadata.asin) {
+        const audnexusResult = await getAudnexusMetadata(metadata.asin);
+        if (audnexusResult) {
+          onChange({
+            ...metadata,
+            title: audnexusResult.title || metadata.title,
+            subtitle: audnexusResult.subtitle,
+            author: audnexusResult.author || metadata.author,
+            narrator: audnexusResult.narrator || metadata.narrator,
+            year: audnexusResult.year,
+            description: audnexusResult.description,
+            publisher: audnexusResult.publisher,
+            series: audnexusResult.series,
+            seriesNumber: audnexusResult.seriesNumber,
+            language: audnexusResult.language,
+            isbn: audnexusResult.isbn,
+            genre: audnexusResult.genre || metadata.genre,
+            tags: audnexusResult.tags,
+            coverData: audnexusResult.coverData || metadata.coverData,
+          });
+          if (audnexusResult.description) {
+            setShowDescription(true);
+          }
+          toast.success('Metadata filled from Audnexus', {
+            description: `Found: "${audnexusResult.title}" by ${audnexusResult.author}`,
+          });
+          return;
+        }
+      }
+
+      // Priority 2: Try Audible scraper (can search by title)
+      const audibleResult = await autoFillFromAudible(query);
+
+      if (audibleResult) {
+        onChange({
+          ...metadata,
+          title: audibleResult.title || metadata.title,
+          subtitle: audibleResult.subtitle,
+          author: audibleResult.author || metadata.author,
+          narrator: audibleResult.narrator || metadata.narrator,
+          description: audibleResult.description,
+          publisher: audibleResult.publisher,
+          series: audibleResult.series,
+          seriesNumber: audibleResult.seriesNumber,
+          language: audibleResult.language,
+          asin: audibleResult.asin,
+          coverData: audibleResult.coverData || metadata.coverData,
+        });
+        if (audibleResult.description) {
+          setShowDescription(true);
+        }
+        toast.success('Metadata filled from Audible', {
+          description: `Found: "${audibleResult.title}" narrated by ${audibleResult.narrator || 'Unknown'}`,
+        });
+        return;
+      }
+
+      // Priority 3: Fall back to Open Library (general books)
       const result = await autoFillBookMetadata(query);
       if (result) {
         onChange({
@@ -110,7 +171,6 @@ export function MetadataStep({ files, metadata, onChange, onNext, onBack, curren
           isbn: result.isbn,
           coverData: result.coverData || metadata.coverData,
         });
-        // Show description section if we got one
         if (result.description) {
           setShowDescription(true);
         }
@@ -119,13 +179,13 @@ export function MetadataStep({ files, metadata, onChange, onNext, onBack, curren
         });
       } else {
         toast.info('No results found', {
-          description: 'Try a different search term.',
+          description: 'Try a different search term or enter an ASIN.',
         });
       }
     } catch (error) {
       console.error('Auto-fill failed:', error);
       toast.error('Auto-fill failed', {
-        description: 'Could not connect to Open Library.',
+        description: 'Could not connect to metadata services.',
       });
     } finally {
       setAutoFillLoading(false);
@@ -466,7 +526,7 @@ export function MetadataStep({ files, metadata, onChange, onNext, onBack, curren
                     </div>
                   </div>
 
-                  {/* ISBN & Language */}
+                  {/* ISBN & ASIN */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="isbn" className="text-xs text-[#8A8F98] mb-1.5 block">ISBN</Label>
@@ -479,15 +539,27 @@ export function MetadataStep({ files, metadata, onChange, onNext, onBack, curren
                       />
                     </div>
                     <div>
-                      <Label htmlFor="language" className="text-xs text-[#8A8F98] mb-1.5 block">Language</Label>
+                      <Label htmlFor="asin" className="text-xs text-[#8A8F98] mb-1.5 block">ASIN (Audible)</Label>
                       <Input
-                        id="language"
-                        value={metadata.language || ''}
-                        onChange={(e) => onChange({ ...metadata, language: e.target.value })}
-                        placeholder="English"
-                        className="h-10 bg-[#0F0F12] border-white/10 text-[#EDEDEF] focus:border-[#5E6AD2] focus:ring-1 focus:ring-[#5E6AD2]/30 rounded-lg"
+                        id="asin"
+                        value={metadata.asin || ''}
+                        onChange={(e) => onChange({ ...metadata, asin: e.target.value })}
+                        placeholder="B0XXXXXX"
+                        className="h-10 bg-[#0F0F12] border-white/10 text-[#EDEDEF] focus:border-[#5E6AD2] focus:ring-1 focus:ring-[#5E6AD2]/30 rounded-lg font-mono"
                       />
                     </div>
+                  </div>
+
+                  {/* Language */}
+                  <div className="w-1/2">
+                    <Label htmlFor="language" className="text-xs text-[#8A8F98] mb-1.5 block">Language</Label>
+                    <Input
+                      id="language"
+                      value={metadata.language || ''}
+                      onChange={(e) => onChange({ ...metadata, language: e.target.value })}
+                      placeholder="English"
+                      className="h-10 bg-[#0F0F12] border-white/10 text-[#EDEDEF] focus:border-[#5E6AD2] focus:ring-1 focus:ring-[#5E6AD2]/30 rounded-lg"
+                    />
                   </div>
                 </div>
               </motion.div>

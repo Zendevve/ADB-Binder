@@ -1,46 +1,45 @@
-import { contextBridge, ipcRenderer, webUtils } from "electron";
-contextBridge.exposeInMainWorld("electron", {
-  openFiles: () => ipcRenderer.invoke("dialog:open-files"),
+import { contextBridge as t, ipcRenderer as o, webUtils as n } from "electron";
+t.exposeInMainWorld("electron", {
+  openFiles: () => o.invoke("dialog:open-files"),
   // Window controls
-  minimize: () => ipcRenderer.send("window:minimize"),
-  maximize: () => ipcRenderer.send("window:maximize"),
-  close: () => ipcRenderer.send("window:close"),
+  minimize: () => o.send("window:minimize"),
+  maximize: () => o.send("window:maximize"),
+  close: () => o.send("window:close"),
   audio: {
-    getPathForFile: (file) => {
-      const path = webUtils.getPathForFile(file);
-      console.log("[PRELOAD] getPathForFile:", file.name, "->", path);
-      return path;
+    getPathForFile: (e) => {
+      const r = n.getPathForFile(e);
+      return console.log("[PRELOAD] getPathForFile:", e.name, "->", r), r;
     },
-    readMetadata: (filePath) => ipcRenderer.invoke("audio:read-metadata", filePath),
-    process: (options) => ipcRenderer.invoke("audio:process", options),
-    detectArtwork: (filePaths) => ipcRenderer.invoke("audio:detect-artwork", filePaths),
-    onProgress: (callback) => {
-      ipcRenderer.on("audio:progress", (_, progress) => callback(progress));
+    readMetadata: (e) => o.invoke("audio:read-metadata", e),
+    process: (e) => o.invoke("audio:process", e),
+    detectArtwork: (e) => o.invoke("audio:detect-artwork", e),
+    onProgress: (e) => {
+      o.on("audio:progress", (r, i) => e(i));
     },
     removeProgressListener: () => {
-      ipcRenderer.removeAllListeners("audio:progress");
+      o.removeAllListeners("audio:progress");
     },
     // Format conversion
-    convert: (request) => ipcRenderer.invoke("audio:convert", request),
-    batchConvert: (requests) => ipcRenderer.invoke("audio:batchConvert", requests),
+    convert: (e) => o.invoke("audio:convert", e),
+    batchConvert: (e) => o.invoke("audio:batchConvert", e),
     // Chapter Splitter
-    readChapters: (filePath) => ipcRenderer.invoke("audio:read-chapters", filePath),
-    splitByChapters: (options) => ipcRenderer.invoke("audio:split-by-chapters", options),
-    onSplitProgress: (callback) => {
-      ipcRenderer.on("audio:split-progress", (_, data) => callback(data));
+    readChapters: (e) => o.invoke("audio:read-chapters", e),
+    splitByChapters: (e) => o.invoke("audio:split-by-chapters", e),
+    onSplitProgress: (e) => {
+      o.on("audio:split-progress", (r, i) => e(i));
     }
   },
   // For direct IPC access (required for image upload events)
   ipcRenderer: {
-    on: (channel, callback) => {
-      ipcRenderer.on(channel, callback);
+    on: (e, r) => {
+      o.on(e, r);
     },
-    removeAllListeners: (channel) => {
-      ipcRenderer.removeAllListeners(channel);
+    removeAllListeners: (e) => {
+      o.removeAllListeners(e);
     }
   },
   project: {
-    save: (projectData) => ipcRenderer.invoke("project:save", projectData),
-    load: () => ipcRenderer.invoke("project:load")
+    save: (e) => o.invoke("project:save", e),
+    load: () => o.invoke("project:load")
   }
 });

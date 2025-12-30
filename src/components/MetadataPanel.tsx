@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Image, RefreshCw, X } from 'lucide-react';
+import { Image, RefreshCw, X, ChevronDown, ChevronUp, Hash, Building2 } from 'lucide-react';
 
 import type { BookMetadata } from '@/types';
 
@@ -179,7 +179,126 @@ export function MetadataPanel({ metadata, onChange, collapsed = false }: Metadat
           </div>
         </div>
       </div>
+
+      {/* Expanded Details Section */}
+      <ExpandedDetails metadata={metadata} onChange={onChange} />
     </Card>
+  );
+}
+
+/**
+ * Collapsible section for advanced metadata fields
+ */
+function ExpandedDetails({
+  metadata,
+  onChange
+}: {
+  metadata: BookMetadata;
+  onChange: (m: BookMetadata) => void;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Check if any advanced fields have values
+  const hasAdvancedData = !!(metadata.series || metadata.publisher || metadata.description || metadata.asin);
+
+  return (
+    <div className="mt-4 pt-4 border-t border-white/[0.06]">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex items-center gap-2 text-xs text-[#8A8F98] hover:text-[#EDEDEF] transition-colors w-full"
+      >
+        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        <span>More Details</span>
+        {hasAdvancedData && !isExpanded && (
+          <span className="ml-auto text-[#5E6AD2] text-[10px]">Has data</span>
+        )}
+      </button>
+
+      {isExpanded && (
+        <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+          {/* Series Row */}
+          <div className="grid grid-cols-[1fr_80px] gap-3">
+            <div>
+              <Label htmlFor="series" className="text-xs text-[#8A8F98] flex items-center gap-1">
+                Series
+              </Label>
+              <Input
+                id="series"
+                value={metadata.series || ''}
+                onChange={(e) => onChange({ ...metadata, series: e.target.value })}
+                placeholder="e.g. Harry Potter"
+                className="h-9 rounded-lg border-white/10 bg-[#0F0F12] text-[#EDEDEF] focus:border-[#5E6AD2] focus:ring-1 focus:ring-[#5E6AD2]/30"
+              />
+            </div>
+            <div>
+              <Label htmlFor="seriesNumber" className="text-xs text-[#8A8F98] flex items-center gap-1">
+                <Hash className="w-3 h-3" /> #
+              </Label>
+              <Input
+                id="seriesNumber"
+                type="number"
+                min="1"
+                value={metadata.seriesNumber || ''}
+                onChange={(e) => onChange({ ...metadata, seriesNumber: e.target.value ? parseInt(e.target.value) : undefined })}
+                placeholder="1"
+                className="h-9 rounded-lg border-white/10 bg-[#0F0F12] text-[#EDEDEF] focus:border-[#5E6AD2] focus:ring-1 focus:ring-[#5E6AD2]/30"
+              />
+            </div>
+          </div>
+
+          {/* Publisher & Language */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="publisher" className="text-xs text-[#8A8F98] flex items-center gap-1">
+                <Building2 className="w-3 h-3" /> Publisher
+              </Label>
+              <Input
+                id="publisher"
+                value={metadata.publisher || ''}
+                onChange={(e) => onChange({ ...metadata, publisher: e.target.value })}
+                placeholder="Optional..."
+                className="h-9 rounded-lg border-white/10 bg-[#0F0F12] text-[#EDEDEF] focus:border-[#5E6AD2] focus:ring-1 focus:ring-[#5E6AD2]/30"
+              />
+            </div>
+            <div>
+              <Label htmlFor="language" className="text-xs text-[#8A8F98]">Language</Label>
+              <Input
+                id="language"
+                value={metadata.language || ''}
+                onChange={(e) => onChange({ ...metadata, language: e.target.value })}
+                placeholder="English"
+                className="h-9 rounded-lg border-white/10 bg-[#0F0F12] text-[#EDEDEF] focus:border-[#5E6AD2] focus:ring-1 focus:ring-[#5E6AD2]/30"
+              />
+            </div>
+          </div>
+
+          {/* ASIN */}
+          <div>
+            <Label htmlFor="asin" className="text-xs text-[#8A8F98]">ASIN</Label>
+            <Input
+              id="asin"
+              value={metadata.asin || ''}
+              onChange={(e) => onChange({ ...metadata, asin: e.target.value })}
+              placeholder="B0XXXXXX (Audible ID)"
+              className="h-9 rounded-lg border-white/10 bg-[#0F0F12] text-[#EDEDEF] focus:border-[#5E6AD2] focus:ring-1 focus:ring-[#5E6AD2]/30 font-mono text-sm"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <Label htmlFor="description" className="text-xs text-[#8A8F98]">Description</Label>
+            <textarea
+              id="description"
+              value={metadata.description || ''}
+              onChange={(e) => onChange({ ...metadata, description: e.target.value })}
+              placeholder="Book description or summary..."
+              rows={3}
+              className="w-full rounded-lg border border-white/10 bg-[#0F0F12] text-[#EDEDEF] focus:border-[#5E6AD2] focus:ring-1 focus:ring-[#5E6AD2]/30 p-2 text-sm resize-none"
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
