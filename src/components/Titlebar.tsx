@@ -54,7 +54,7 @@ export function Titlebar({ onSaveProject, onLoadProject, onOpenSettings, onLoadR
 
   return (
     <div
-      className="h-10 flex items-center justify-between px-4 select-none relative z-50"
+      className="h-10 flex items-center justify-between px-4 select-none relative z-50 bg-[#0a0a0c]"
       style={{ WebkitAppRegion: 'drag' } as any}
     >
       {/* Left - App Title */}

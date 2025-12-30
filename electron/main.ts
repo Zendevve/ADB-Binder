@@ -1,4 +1,5 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
+import { exec } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
@@ -997,4 +998,56 @@ ipcMain.handle('audio:detect-silence', async (_event, options: SilenceDetectOpti
       })
       .run();
   });
+});
+
+// ========================================
+// Export Enhancements
+// ========================================
+
+ipcMain.on('file:start-drag', (event, filePath: string) => {
+  if (fs.existsSync(filePath)) {
+    event.sender.startDrag({
+      file: filePath,
+      icon: path.join(__dirname, '../public/file-icon.png'), // Fallback icon path (may need adjustment)
+    });
+  }
+});
+
+ipcMain.handle('files:add-to-itunes', async (_event, filePath: string) => {
+  try {
+    if (!fs.existsSync(filePath)) {
+      throw new Error('File not found');
+    }
+
+    if (process.platform === 'darwin') {
+      // macOS: Use 'open -a Music'
+      return new Promise((resolve, reject) => {
+        exec(`open -a Music "${filePath}"`, (err) => {
+          if (err) reject(err);
+          else resolve({ success: true });
+        });
+      });
+    } else if (process.platform === 'win32') {
+      // Windows: Check for "Automatically Add to iTunes" folder
+      const autoAddPath = path.join(os.homedir(), 'Music', 'iTunes', 'iTunes Media', 'Automatically Add to iTunes');
+
+      if (fs.existsSync(autoAddPath)) {
+        const destPath = path.join(autoAddPath, path.basename(filePath));
+        fs.copyFileSync(filePath, destPath);
+        console.log('[ITUNES] Copied to Auto-Add folder:', destPath);
+        return { success: true, method: 'copy' };
+      } else {
+        // Fallback: Open with default player (likely iTunes)
+        await shell.openPath(filePath);
+        return { success: true, method: 'open' };
+      }
+    } else {
+      // Linux/Other: Just open
+      await shell.openPath(filePath);
+      return { success: true, method: 'open' };
+    }
+  } catch (err) {
+    console.error('[ITUNES] Error adding to library:', err);
+    return { success: false, error: (err as Error).message };
+  }
 });

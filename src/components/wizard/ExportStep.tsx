@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Disc, ArrowLeft, FileAudio, Clock, AlertTriangle, Apple } from 'lucide-react';
+import { Disc, ArrowLeft, FileAudio, Clock, AlertTriangle, Apple, Music, Check, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { StepIndicator } from '@/components/wizard/StepIndicator';
 import type { AudioFile } from '@/types';
 import type { BookMetadata } from '@/types';
@@ -11,6 +11,9 @@ import { cn, formatDuration } from '@/lib/utils';
 
 type OutputFormat = 'm4b' | 'mp3' | 'aac';
 type Bitrate = '64k' | '96k' | '128k' | '192k';
+
+import { ProfileSelector } from '@/components/ProfileSelector';
+import type { ConversionPreset, AudioFormat } from '@/lib/conversion-presets';
 
 interface ExportStepProps {
   files: AudioFile[];
@@ -25,6 +28,19 @@ interface ExportStepProps {
   onExport: () => void;
   onBack: () => void;
   currentStep: number;
+  // New props for Presets
+  userPresets: ConversionPreset[];
+  selectedPresetId: string;
+  onPresetChange: (preset: ConversionPreset) => void;
+  onSaveUserPreset: (preset: ConversionPreset) => void;
+  onDeleteUserPreset: (presetId: string) => void;
+  // Export Enhancements
+  lastExportedPath: string | null;
+  onReset: () => void;
+  autoAddToLibrary: boolean;
+  onAutoAddToLibraryChange: (enabled: boolean) => void;
+  onAddToLibrary: (path: string) => Promise<{ success: boolean; error?: string }>;
+  onStartDrag: (path: string) => void;
 }
 
 export function ExportStep({
@@ -40,47 +56,102 @@ export function ExportStep({
   onExport,
   onBack,
   currentStep,
+  userPresets,
+  selectedPresetId,
+  onPresetChange,
+  onSaveUserPreset,
+  onDeleteUserPreset,
+  lastExportedPath,
+  onReset,
+  autoAddToLibrary,
+  onAutoAddToLibraryChange,
+  onAddToLibrary,
+  onStartDrag,
 }: ExportStepProps) {
   const totalDuration = files.reduce((acc, f) => acc + (f.metadata.duration || 0), 0);
 
-
-
   const showMp3Warning = outputFormat === 'mp3' && files.length > 1;
+
+  // Render Success View if valid path
+  if (lastExportedPath) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex-1 flex flex-col items-center justify-center p-8"
+      >
+        <div className="w-full max-w-md bg-[#0a0a0c] border border-white/10 rounded-2xl p-8 flex flex-col items-center text-center shadow-2xl relative overflow-hidden">
+          {/* Success Glow */}
+          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-green-500 to-transparent opacity-50" />
+
+          <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-6 ring-1 ring-green-500/20">
+            <Check className="w-8 h-8 text-green-500" />
+          </div>
+
+          <h2 className="text-2xl font-bold text-white mb-2">Export Complete!</h2>
+          <p className="text-[#8A8F98] mb-8">Your audiobook is ready.</p>
+
+          {/* Draggable File Card */}
+          <div
+            draggable
+            onDragStart={(e) => {
+              e.preventDefault();
+              onStartDrag(lastExportedPath);
+            }}
+            className="w-full p-4 bg-white/[0.03] border border-white/10 rounded-xl mb-6 cursor-grab active:cursor-grabbing hover:bg-white/[0.05] transition-colors group flex items-center gap-4"
+          >
+            <div className="w-12 h-12 rounded-lg bg-[#5E6AD2]/20 flex items-center justify-center text-[#5E6AD2]">
+              <FileAudio className="w-6 h-6" />
+            </div>
+            <div className="text-left flex-1 min-w-0">
+              <div className="text-sm font-medium text-white truncate">
+                {metadata.title || 'Audiobook'}
+              </div>
+              <div className="text-xs text-[#8A8F98] truncate">
+                {outputFormat.toUpperCase()} • {formatDuration(totalDuration, 'human')}
+              </div>
+            </div>
+            <div className="text-xs text-[#8A8F98] opacity-0 group-hover:opacity-100 transition-opacity">
+              Drag me
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 w-full">
+            <Button
+              disabled={processing} // Reuse processing valid here? Probably fine.
+              onClick={async () => {
+                // Add to library manually
+                await onAddToLibrary(lastExportedPath);
+              }}
+              variant="outline"
+              className="w-full bg-transparent border-white/10 text-white hover:bg-white/5"
+            >
+              <Music className="w-4 h-4 mr-2" />
+              Add to Music Library
+            </Button>
+
+            <Button
+              onClick={onReset}
+              className="w-full bg-[#5E6AD2] hover:bg-[#6872D9] text-white"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Start New Project
+            </Button>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
   // Handle format change
   const handleFormatChange = (value: string) => {
     onFormatChange(value as OutputFormat);
-    setSelectedPreset('custom');
+    // Keep custom selection, don't auto-switch presets if manually changing options
   };
 
   // Handle bitrate change
   const handleBitrateChange = (value: string) => {
     onBitrateChange(value as Bitrate);
-    setSelectedPreset('custom');
-  };
-
-  // Quality presets
-  type QualityPreset = 'spoken' | 'high' | 'custom';
-  const [selectedPreset, setSelectedPreset] = useState<QualityPreset>('spoken');
-
-  const handlePresetChange = (preset: QualityPreset) => {
-    setSelectedPreset(preset);
-
-    switch (preset) {
-      case 'spoken':
-        // Spoken Word: MP3 with lower bitrate, optimized for voice
-        onFormatChange('mp3');
-        onBitrateChange('64k');
-        break;
-      case 'high':
-        // High Quality: M4B with higher bitrate
-        onFormatChange('m4b');
-        onBitrateChange('128k');
-        break;
-      case 'custom':
-        // Leave current settings
-        break;
-    }
   };
 
   return (
@@ -142,44 +213,20 @@ export function ExportStep({
 
             {/* Export Settings */}
             <div className="space-y-4">
-              {/* Quality Presets */}
+              {/* Profile Selector */}
               <div>
-                <Label className="text-xs text-[#8A8F98] mb-2 block">Quality Preset</Label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handlePresetChange('spoken')}
-                    className={cn(
-                      "flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all",
-                      selectedPreset === 'spoken'
-                        ? "bg-[#5E6AD2]/20 border-[#5E6AD2] text-[#5E6AD2]"
-                        : "bg-white/[0.02] border-white/10 text-[#8A8F98] hover:border-white/20"
-                    )}
-                  >
-                    Spoken Word
-                  </button>
-                  <button
-                    onClick={() => handlePresetChange('high')}
-                    className={cn(
-                      "flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all flex items-center justify-center gap-1.5",
-                      selectedPreset === 'high'
-                        ? "bg-[#5E6AD2]/20 border-[#5E6AD2] text-[#5E6AD2]"
-                        : "bg-white/[0.02] border-white/10 text-[#8A8F98] hover:border-white/20"
-                    )}
-                  >
-                    High Quality
-                  </button>
-                  <button
-                    onClick={() => handlePresetChange('custom')}
-                    className={cn(
-                      "flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-all",
-                      selectedPreset === 'custom'
-                        ? "bg-[#5E6AD2]/20 border-[#5E6AD2] text-[#5E6AD2]"
-                        : "bg-white/[0.02] border-white/10 text-[#8A8F98] hover:border-white/20"
-                    )}
-                  >
-                    Custom
-                  </button>
-                </div>
+                <Label className="text-xs text-[#8A8F98] mb-2 block">Output Profile</Label>
+                <ProfileSelector
+                  selectedPresetId={selectedPresetId}
+                  onPresetChange={onPresetChange}
+                  userPresets={userPresets}
+                  onSaveUserPreset={onSaveUserPreset}
+                  onDeleteUserPreset={onDeleteUserPreset}
+                  currentSettings={{
+                    format: outputFormat as AudioFormat,
+                    bitrate: bitrate,
+                  }}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -230,6 +277,16 @@ export function ExportStep({
                           192 kbps
                         </span>
                       </SelectItem>
+                      <SelectItem value="256k">
+                        <span className="flex items-center gap-2">
+                          256 kbps
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="320k">
+                        <span className="flex items-center gap-2">
+                          320 kbps
+                        </span>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -265,6 +322,24 @@ export function ExportStep({
                   </div>
                 </div>
               )}
+
+              {/* Auto Add to Library Toggle */}
+              <div className="flex items-start space-x-3 p-3 rounded-lg border border-white/10 bg-white/[0.02]">
+                <Checkbox
+                  id="auto-add"
+                  checked={autoAddToLibrary}
+                  onCheckedChange={(checked) => onAutoAddToLibraryChange(checked === true)}
+                  className="mt-1 border-white/20 data-[state=checked]:bg-[#5E6AD2] data-[state=checked]:border-[#5E6AD2]"
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label htmlFor="auto-add" className="text-sm font-medium text-white cursor-pointer">
+                    Automatically add to Music Library
+                  </Label>
+                  <p className="text-xs text-[#8A8F98]">
+                    Import the file into iTunes/Music app immediately after export.
+                  </p>
+                </div>
+              </div>
 
 
 

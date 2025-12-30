@@ -63,6 +63,17 @@ export interface UserSettings {
   defaultOutputFormat?: 'm4b' | 'mp3' | 'aac';
   defaultBitrate?: string;
   theme?: 'dark' | 'light' | 'system';
+  selectedPresetId?: string;
+  userPresets?: Array<{
+    id: string;
+    name: string;
+    targetFormat: string;
+    bitrate: string;
+    description: string;
+    icon?: string;
+    isBuiltIn?: boolean;
+  }>;
+  autoAddToLibrary?: boolean;
 }
 
 export interface RecentProject {
@@ -153,6 +164,10 @@ declare global {
         read: () => Promise<RecentProject[]>;
         add: (path: string) => Promise<RecentProject[]>;
         clear: () => Promise<RecentProject[]>;
+      };
+      files: {
+        startDrag: (filePath: string) => void;
+        addToItunes: (filePath: string) => Promise<{ success: boolean; method?: string; error?: string }>;
       };
     };
   }

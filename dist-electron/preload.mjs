@@ -49,5 +49,10 @@ s.exposeInMainWorld("electron", {
   project: {
     save: (e) => o.invoke("project:save", e),
     load: () => o.invoke("project:load")
+  },
+  // File System & Drag-Drop
+  files: {
+    startDrag: (e) => o.send("file:start-drag", e),
+    addToItunes: (e) => o.invoke("files:add-to-itunes", e)
   }
 });

@@ -67,5 +67,10 @@ contextBridge.exposeInMainWorld('electron', {
     save: (projectData: object) => ipcRenderer.invoke('project:save', projectData),
     load: () => ipcRenderer.invoke('project:load'),
   },
+  // File System & Drag-Drop
+  files: {
+    startDrag: (filePath: string) => ipcRenderer.send('file:start-drag', filePath),
+    addToItunes: (filePath: string) => ipcRenderer.invoke('files:add-to-itunes', filePath),
+  },
 });
 

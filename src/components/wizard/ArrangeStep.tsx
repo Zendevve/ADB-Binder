@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GripVertical, FileMusic, X, Clock, ArrowRight, ArrowLeft, Download, Loader2, AudioWaveform } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragOverlay } from '@dnd-kit/core';
@@ -13,6 +13,8 @@ import { getChaptersByAsin } from '@/lib/audnexus';
 import { toast } from 'sonner';
 import type { AudioFile } from '@/types';
 import { cn, formatDuration } from '@/lib/utils';
+import { BatchRenameModal } from '@/components/BatchRenameModal';
+import { RefreshCw } from 'lucide-react';
 
 interface ArrangeStepProps {
   files: AudioFile[];
@@ -28,7 +30,7 @@ interface ArrangeStepProps {
 
 
 // Sortable Track Item
-function TrackItem({
+const TrackItem = memo(function TrackItem({
   file,
   index,
   onRemove,
@@ -67,6 +69,7 @@ function TrackItem({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: isDragging ? 0.3 : 1, y: 0 }}
       exit={{ opacity: 0, x: -20 }}
+      layout // Add layout prop for smoother reordering animations, carefully
       className={cn(
         "flex items-center gap-4 p-4 rounded-xl transition-all duration-200",
         "bg-[#0a0a0c] border border-white/[0.06]",
@@ -128,7 +131,9 @@ function TrackItem({
       </Button>
     </motion.div>
   );
-}
+}, (prev, next) => {
+  return prev.file === next.file && prev.index === next.index;
+});
 
 // Drag Overlay Item (ghost while dragging)
 function DragOverlayItem({ file, index }: { file: AudioFile; index: number }) {
@@ -171,6 +176,7 @@ export function ArrangeStep({ files, onFilesChange, onRemoveFile, onUpdateMetada
   const [showAsinInput, setShowAsinInput] = useState(false);
   const [customAsin, setCustomAsin] = useState(asin || '');
   const [detectingLoading, setDetectingLoading] = useState(false);
+  const [showBatchRename, setShowBatchRename] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -320,6 +326,24 @@ export function ArrangeStep({ files, onFilesChange, onRemoveFile, onUpdateMetada
     }
   };
 
+  const handleBatchRename = (newTitles: Map<string, string>) => {
+    const updatedFiles = files.map(file => {
+      const newTitle = newTitles.get(file.id);
+      if (newTitle) {
+        return {
+          ...file,
+          metadata: {
+            ...file.metadata,
+            title: newTitle
+          }
+        };
+      }
+      return file;
+    });
+    onFilesChange(updatedFiles);
+    toast.success(`Renamed ${newTitles.size} chapters`);
+  };
+
   const activeFile = activeId ? files.find(f => f.id === activeId) : null;
   const activeIndex = activeId ? files.findIndex(f => f.id === activeId) : -1;
 
@@ -399,6 +423,17 @@ export function ArrangeStep({ files, onFilesChange, onRemoveFile, onUpdateMetada
             </Button>
           )}
 
+          {/* Batch Rename Button */}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setShowBatchRename(true)}
+            className="h-8 text-[#8A8F98] hover:text-[#EDEDEF] hover:bg-white/[0.05]"
+          >
+            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+            Batch Rename
+          </Button>
+
           {/* Detect Silence Button */}
           <Button
             size="sm"
@@ -472,6 +507,14 @@ export function ArrangeStep({ files, onFilesChange, onRemoveFile, onUpdateMetada
           <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       </div>
-    </motion.div>
+
+
+      <BatchRenameModal
+        isOpen={showBatchRename}
+        onClose={() => setShowBatchRename(false)}
+        files={files}
+        onApply={handleBatchRename}
+      />
+    </motion.div >
   );
 }

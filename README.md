@@ -111,34 +111,49 @@ I wanted a tool that respects the user: **Open Core**, privacy-respecting, and p
 
 ## Getting Started
 
-### Prerequisites
+### System Requirements & Compilation Prerequisites
 
-- **Node.js** ≥ 18.x
-- **OS**: Windows 10/11, macOS 12+, or Linux (Debian/RPM)
+Compilation from source requires a precise development environment to ensure native module stability.
 
-### Installation
+- **Runtime**: Node.js **20.11.0 LTS** (Strict requirement for Electron ABI compatibility).
+- **Compiler Toolchain**:
+    - **Windows**: Visual Studio 2022 Build Tools (C++ workload) + Windows 10 SDK (10.0.19041.0).
+    - **macOS**: Xcode 15+ + Command Line Tools (required for `node-gyp`).
+    - **Python**: v3.11 (for rebuilding native dependencies).
+    - **FFmpeg**: Compiled binaries must be manually linked or provided via `ffmpeg-static` override.
 
-1.  Clone the repository:
+### Manual Compilation Guide
+
+1.  **Repository Cloning & Integrity Check**:
+    Clone with full history to ensure git-flow hooks function correctly.
     ```bash
     git clone https://github.com/Zendevve/audiobook-toolkit.git
-    cd audiobook-toolkit
+    cd audiobook-toolkit/modern_markable
     ```
-2.  Install dependencies:
+
+2.  **Dependency Resolution**:
+    Recommended to use `npm ci` over `npm install` to enforce strict lockfile adherence and prevent dependency drift.
     ```bash
-    npm install
-    # or
-    yarn install
+    npm ci --include=dev
+    # Ensure electron binary downloads complete successfully
     ```
-3.  Start the development server:
+
+3.  **Native Module Rebuild**:
+    Force recompilation of C++ modules (`better-sqlite3`, system bindings) against the specific Electron version header.
+    ```bash
+    npm run postinstall -- --arch=x64 --platform=win32
+    ```
+
+4.  **Dev Server Initialization**:
+    Launch the Vite wrapper and attach the Electron debugger.
     ```bash
     npm run dev
     ```
 
-> [!WARNING]
-> **Note on Windows SmartScreen**:
-> Because I am an independent developer, I cannot currently afford code signing certificates (~$400/year).
-> When you run the installer, you may see "Windows protected your PC". This does **not** mean the file is malicious.
-> Click **"More info"** → **"Run anyway"**.
+> [!CAUTION]
+> **Code Signing & Unsigned Binaries**:
+> Builds generated locally are **unsigned**. Windows SmartScreen and macOS Gatekeeper will aggressively block execution.
+> You must manually whitelist the binary or purchase an EV Code Signing Certificate ($400+/year) to remove these warnings.
 
 ## Documentation
 

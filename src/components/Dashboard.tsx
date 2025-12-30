@@ -13,6 +13,7 @@ import { AudioAnalyzer } from '@/lib/audio-analyzer';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { SettingsModal } from '@/components/SettingsModal';
 import type { AudioFile, BookMetadata, UserSettings } from '@/types';
+import { type ConversionPreset, DEFAULT_PRESET_ID } from '@/lib/conversion-presets';
 
 type OutputFormat = 'm4b' | 'mp3' | 'aac';
 type Bitrate = '64k' | '96k' | '128k' | '192k';
@@ -40,6 +41,7 @@ export default function Dashboard() {
   const [itunesCompatibility, setItunesCompatibility] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState({ percent: 0, timemark: '' });
+  const [lastExportedPath, setLastExportedPath] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [userSettings, setUserSettings] = useState<UserSettings>({});
 
@@ -169,6 +171,7 @@ export default function Dashboard() {
   const handleProcess = useCallback(async () => {
     if (files.length === 0) return;
     setProcessing(true);
+    setLastExportedPath(null);
     setProgress({ percent: 0, timemark: '' });
 
     try {
@@ -196,16 +199,17 @@ export default function Dashboard() {
         toast.success('Audiobook created successfully!', {
           description: `Saved to: ${result.outputPath}`,
         });
-        // Reset to start
-        // Cleanup and reset
-        files.forEach(f => {
-          if (f.metadata?.cover?.startsWith('blob:')) {
-            URL.revokeObjectURL(f.metadata.cover);
-          }
-        });
-        setCurrentStep(1);
-        resetFiles([]);
-        setMetadata(defaultMetadata);
+
+        setLastExportedPath(result.outputPath);
+
+        // Auto-add to library if enabled
+        if (userSettings.autoAddToLibrary && result.outputPath && window.electron?.files?.addToItunes) {
+          window.electron.files.addToItunes(result.outputPath)
+            .then(res => {
+              if (res.success) toast.success('Added to Music Library');
+              else toast.error('Failed to add to Library', { description: res.error });
+            });
+        }
       } else if (result.cancelled) {
         toast.info('Export cancelled');
       }
@@ -217,7 +221,22 @@ export default function Dashboard() {
       });
       setProcessing(false);
     }
-  }, [files, metadata, outputFormat, bitrate]);
+  }, [files, metadata, outputFormat, bitrate, userSettings]);
+
+  const handleReset = useCallback(() => {
+    // Cleanup blobs
+    filesRef.current.forEach(f => {
+      if (f.metadata?.cover?.startsWith('blob:')) {
+        URL.revokeObjectURL(f.metadata.cover);
+      }
+    });
+
+    setCurrentStep(1);
+    resetFiles([]);
+    setMetadata(defaultMetadata);
+    setLastExportedPath(null);
+  }, []);
+
 
   // Save Project Handler
   const handleSaveProject = useCallback(async () => {
@@ -327,7 +346,7 @@ export default function Dashboard() {
       />
 
       {/* Tool Navigation Tabs */}
-      <div className="flex border-b border-white/[0.06] px-6 bg-[#0a0a0c]/50 backdrop-blur-sm">
+      <div className="flex border-b border-white/[0.06] px-6 bg-[#0a0a0c]">
         <button
           onClick={() => setToolMode('binder')}
           className={`px-6 py-3 font-medium transition-all relative ${toolMode === 'binder'
@@ -429,6 +448,50 @@ export default function Dashboard() {
             onExport={handleProcess}
             onBack={prevStep}
             currentStep={currentStep}
+            lastExportedPath={lastExportedPath}
+            userPresets={(userSettings.userPresets as unknown as ConversionPreset[]) || []}
+            selectedPresetId={userSettings.selectedPresetId || DEFAULT_PRESET_ID}
+            onPresetChange={(preset) => {
+              setOutputFormat(preset.targetFormat as OutputFormat);
+              setBitrate(preset.bitrate as Bitrate);
+              if (preset.itunesCompatibility !== undefined) {
+                setItunesCompatibility(preset.itunesCompatibility);
+              }
+              handleSaveSettings({ ...userSettings, selectedPresetId: preset.id });
+            }}
+            onSaveUserPreset={async (preset) => {
+              const updatedPresets = [...(userSettings.userPresets || []), preset];
+              await handleSaveSettings({
+                ...userSettings,
+                userPresets: updatedPresets,
+                selectedPresetId: preset.id
+              });
+            }}
+            onDeleteUserPreset={async (presetId) => {
+              const updatedPresets = (userSettings.userPresets || []).filter(p => p.id !== presetId);
+              const newSettings: UserSettings = { ...userSettings, userPresets: updatedPresets };
+              if (userSettings.selectedPresetId === presetId) {
+                newSettings.selectedPresetId = 'audiobook-standard';
+                setOutputFormat('m4b');
+                setBitrate('64k');
+              }
+              await handleSaveSettings(newSettings);
+            }}
+            onReset={handleReset}
+            autoAddToLibrary={userSettings.autoAddToLibrary || false}
+            onAutoAddToLibraryChange={(enabled) => handleSaveSettings({ ...userSettings, autoAddToLibrary: enabled })}
+            onAddToLibrary={async (path) => {
+              if (window.electron?.files?.addToItunes) {
+                return await window.electron.files.addToItunes(path);
+              }
+              return { success: false, error: 'Not supported' };
+            }}
+            onStartDrag={(path) => {
+              if (window.electron?.files?.startDrag) {
+                window.electron.files.startDrag(path);
+              }
+            }}
+
           />
         )}
         {toolMode === 'converter' && (
