@@ -66,6 +66,25 @@ A comprehensive, open-source desktop application for managing and upgrading your
 - **32-bit Integer Fix**: Modifies internal file atoms (stco/co64) to ensure compatibility with 32-bit legacy devices (iPod Classic, older iPhones, 3rd party car stereos).
 - **QuickTime Optimization**: Restructures file atoms for stream-ability and faster loading on Apple Books.
 
+### 🔍 Smart Metadata Auto-Fill
+*No more manual typing of Title, Author, Narrator...*
+- **Audnexus API**: Fetches rich audiobook metadata including narrators, series info, and cover art using ASIN.
+- **Audible Scraper**: Falls back to scraping Audible search results when ASIN is unavailable.
+- **Open Library Fallback**: Tertiary source for general book metadata.
+- **3-Tier Priority**: Automatically tries Audnexus → Audible → Open Library.
+
+### 📖 Chapter Import from Audnexus
+*Get official chapter names with one click.*
+- **ASIN Lookup**: Enter an Audible ASIN to fetch chapter titles from Audnexus.
+- **Auto-Apply**: Chapter names are applied to your audio files in order.
+- **Smart Handling**: Handles mismatches between file count and chapter count gracefully.
+
+### 🔊 Silence Detection for Auto-Chaptering
+*Automatically detect chapter breaks from audio silence.*
+- **FFmpeg Analysis**: Uses the `silencedetect` audio filter to find silence gaps.
+- **Configurable Sensitivity**: Adjust noise threshold (-50dB default) and minimum duration (1.5s default).
+- **Suggested Chapters**: Generates chapter boundaries based on detected silence gaps.
+
 ### 🕵️ Privacy & Local First
 - **Offline**: Zero network calls required for core functionality.
 - **Transparent**: No analytics, no tracking pixels, no account requirements.
